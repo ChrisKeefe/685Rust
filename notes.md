@@ -3,8 +3,9 @@
 ## General
 
 - fn main() is the universal entry-point for rust programs.
-- semicolons! (they indicate the end of an expression, as usual) Yay!
+- semicolons indicate the end of an expression, as usual. Yay!
 - `!` indicates a _macro_ is being called, not a function
+- 'binary crates' produce executables, while 'library crates' prodce ... libraries
 
 ## Style
 
@@ -81,5 +82,26 @@ Rust fmt prefers:
 - `cargo fix` has the ability to lint and/or update legacy projects to current edition
 - `cargo clean` removes the `target` directory
   - NOTE: working in VSCode, with Rust and rust-analyzer extensions enabled, target regenerates after deletion.
-    Should this be adusted in `.gitignore` (perhaps globally), or in the extensions? Is this preferred?
-    Seems like a lot of clutter.
+    Q: Should this be adusted in `.gitignore`?
+    A: Yes, unless committing executables is preferred for some reason. And it is, in the standard github .gitignore for Rust
+
+## Documentation
+
+- `rustup doc` builds and opens Rust documentation locally
+- `cargo doc --open` builds and opens documentation locally for all crate dependencies
+
+## Std. Lib
+
+- `cmp` is called on a comparable value, and passed a _reference_ to a value to which it can be compared
+  - `value.cmp(&other_value)`
+  - returns an Ordering enum, which we can check and respond to using `match`
+- `parse` parses a string slice into another type, returning a Result (Ok/Err)
+
+## Questions
+
+- must the arms of a `match` statement be mutually exclusive? Can `match` match more than one arm?
+  - I suspect it must be mutually exclusive: "The match expression ends [short-circuits] because it has no need to look at the last arm [if it has already found a match]"
+
+## syntax, operators, etc
+
+- "The underscore, `_`, is a catchall value; `Err(_)` matches all `Err` values
