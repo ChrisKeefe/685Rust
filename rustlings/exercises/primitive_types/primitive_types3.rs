@@ -2,13 +2,14 @@
 // Create an array with at least 100 elements in it where the ??? is. 
 // Execute `rustlings hint primitive_types3` for hints!
 
-// I AM NOT DONE
-
 fn main() {
-    let a = ???
+    let oh_no = ['🐙'; 666];
 
-    if a.len() >= 100 {
-        println!("Wow, that's a big array!");
+    if oh_no.len() >= 100 {
+        println!("Run for your lives!");
+        for i in 0..oh_no.len() {
+            println!("{}", oh_no[i]);
+        }
     } else {
         println!("Meh, I eat arrays like that for breakfast.");
     }
