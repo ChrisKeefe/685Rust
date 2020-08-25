@@ -74,7 +74,16 @@ Rust fmt prefers:
   - Types _must_ be annotated when using `const`
   - function calls can't be used in initializing consts, unless they are const functions: `const fn get_value():`
 
-## Data types
+## Primitive Data types
+
+- primitive types are stored on the stack while in scope
+- here, `let x = 5; let y = x;`, the _value_ `5` is copied and assigned to `y`
+  - this behavior is driven by the `Copy` trait, and is applicable to:
+    - All int types
+    - All float types
+    - bool
+    - char
+    - Tuples, if they exclusively contain types that are also `Copy`
 
 ### Scalar types
 
@@ -100,7 +109,7 @@ Rust fmt prefers:
   - pattern matching (destructuring assignment) works: `let (x, y, z) = tup;`
   - so does indexed access: `let neg_one = tup.0`
 - arrays
-  - fixed-length (but vectors can grow/shrink)
+  - fixed-length (vectors OTOH can grow/shrink)
   - fmt: comma-separated values in brackets: `let arr: [i8; 3] = [-1, 7, 255];`
   - one type per array, indicated in brackets
   - second number in optional type annotation is number of elements
@@ -109,6 +118,26 @@ Rust fmt prefers:
   - access using indexing: `let neg_one = arr[0];`
   - slice like so: `let all_inclusive_slice = &some_array[0..some_array.len()];`
   - Rust catches array overrun errors at runtime with "index out of bounds"
+
+## Complex Data types
+
+- Stored on the heap, subject to ownership rules
+- `String`, for example, is _literally_ a struct on the stack with a pointer to heap memory and length/capacity values
+- In `let x = String::from("hello"); let y = x;`, the _struct_ is copied and assigned to `y`, giving `y` a pointer to the value `hello` in memory. When this happens, x is _invalidated_, its values may not be borrowed, and it will not be freed (protecting us from double-free-ing the data). Rather than a `shallow copy`, then, this is called a `move`.
+
+### String literals
+
+- immutable, must be declared at compile time
+- stored on the stack
+- These may actually be primitive compounds? Not sure.
+
+### String
+
+- stored on the heap, memory is requested at runtime and must be returned
+- can be created from literals with `let s = String::from("some literal");`
+- mutable, e.g.: `s.push_str(" appended text");`
+- unlike a literal, `String` is _actually_ a struct holding a pointer, length and capacity values
+- the `String` _struct_ lives on the stack, but points to an address in heap memory
 
 ## Cargo
 
@@ -127,9 +156,6 @@ Rust fmt prefers:
   - significantly faster for larger projects. good for interim compile checks
 - `cargo fix` has the ability to lint and/or update legacy projects to current edition
 - `cargo clean` removes the `target` directory
-  - NOTE: working in VSCode, with Rust and rust-analyzer extensions enabled, target regenerates after deletion.
-    Q: Should this be adusted in `.gitignore`?
-    A: Yes, unless committing executables is preferred for some reason. And it is, in the standard github .gitignore for Rust
 
 ## Documentation
 
@@ -156,12 +182,30 @@ Rust fmt prefers:
 - `else if` combines if with else
 
 ## Loops
+
 - `loop` executes until explicitly halted, like a dedicated `while(True)`
   - `break` is used to break the loop, and can "return" the result of an expression. If we assign the whole loop to a variable, `break counter` return the value of `counter` and save it to the variable
   - useful in retrying operations that might fail
   - Emphasizes that this loop continues indefinitely, unless some event occurs.
 - `while` - standard while loop. condition does not require parens. Emphasizes that loop occurs "while a condition remains true"
-- `for` 
+- `for` iterates over a collection of items
+
+## Ownership/Borrowing
+
+### The rules
+
+- Each value in Rust has a variable that’s called its owner.
+- There can only be one owner at a time.
+- When the owner goes out of scope, the value will be dropped.
+
+### Nuts and bolts
+
+- `drop` is called when a variable goes out of scope, and frees its memory
+- No deep copying by default in Rust. Use `x.clone()` if you need a deep copy.
+- In `let x = String::from("hello"); let y = x;`, the data is `moved` not copied, leaving `x` invalid
+- the `Copy` trait is used to indicate that values of a type should remain accessible after assignment to a second variable. Put differently, `Copy` objects are not `moved`.
+- When a variable is passed to a function, it will be moved or copied as appropriate. E.g. a String passed to a function will no longer be valid in its declared scope, having been moved into the function scope. This invalidation does not affect `Copy` variables (e.g. a variable holding a `u32`)
+- The same behavior is used by `return`
 
 ## Questions
 
