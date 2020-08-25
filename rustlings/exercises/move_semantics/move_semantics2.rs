@@ -2,8 +2,6 @@
 // Make me compile without changing line 13!
 // Execute `rustlings hint move_semantics2` for hints :)
 
-// I AM NOT DONE
-
 // Initial solution - clone
 // fn main() {
 //     let vec0 = Vec::new();

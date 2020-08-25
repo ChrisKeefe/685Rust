@@ -207,6 +207,36 @@ Rust fmt prefers:
 - When a variable is passed to a function, it will be moved or copied as appropriate. E.g. a String passed to a function will no longer be valid in its declared scope, having been moved into the function scope. This invalidation does not affect `Copy` variables (e.g. a variable holding a `u32`)
 - The same behavior is used by `return`
 
+### References
+
+- `&` reference operator
+- `*` dereference operator
+- references are immutable by default, but you can create one `mut & myvar` per variable
+- curly braces `{}` can be used to create new scopes, in which we can make additional mutable references to a variable. This is possible, because they are creating new scopes, so there are never multiple _simultaneous_ mutable references
+- it is not possible to have both mutable and immutable references to a single value at the same time...
+- meaning that this is OK:
+  
+  ``` Rust
+  fn main() {
+    let mut s = String::from("hello");
+
+    let r1 = &s; // no problem
+    let r2 = &s; // no problem
+    println!("{} and {}", r1, r2);
+    // r1 and r2 are no longer used after this point
+
+    let r3 = &mut s; // no problem
+    println!("{}", r3);
+  }
+  ```
+
+- Above, we see that reference scope lasts only until the final _use_ of the variable, not until the end of the parent stack frame
+
+#### Reference Rules
+
+- At any given time, you may have _either_ one mutable reference _or_ any number of immutable references
+- References must always be valid. (No dangling references to values that have gone out of scope)
+
 ## Questions
 
 - must the arms of a `match` statement be mutually exclusive? Can `match` match more than one arm?
