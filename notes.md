@@ -125,6 +125,24 @@ Rust fmt prefers:
 - `String`, for example, is _literally_ a struct on the stack with a pointer to heap memory and length/capacity values
 - In `let x = String::from("hello"); let y = x;`, the _struct_ is copied and assigned to `y`, giving `y` a pointer to the value `hello` in memory. When this happens, x is _invalidated_, its values may not be borrowed, and it will not be freed (protecting us from double-free-ing the data). Rather than a `shallow copy`, then, this is called a `move`.
 
+### Slice type
+
+- immutable
+- slices store a pointer to the starting position and the length of the slice
+- array slices are of type `&[<type_of_internal_data>]`
+- string slices are signified by type annotation: &str
+- string literals are actually slices pointing to a specific point in the binary
+- prefer string slices for fn parameters: you can pass them a slice, or a full-length slice of a String
+
+#### Range syntax
+
+[0..2] == [0, 1]
+[..2]  == [0, 1]
+
+[3..s.len()] == [3..]
+
+[..] == [0..s.len()] -> take a slice of the entire string
+
 ### String literals
 
 - immutable, must be declared at compile time
@@ -236,6 +254,10 @@ Rust fmt prefers:
 
 - At any given time, you may have _either_ one mutable reference _or_ any number of immutable references
 - References must always be valid. (No dangling references to values that have gone out of scope)
+
+## Iterators
+
+- `iter()` method returns each element in a collection
 
 ## Questions
 
