@@ -1,10 +1,13 @@
 // enums3.rs
 // Address all the TODOs to make the tests pass!
 
-// I AM NOT DONE
-
 enum Message {
     // TODO: implement the message variant types based on their usage below
+    Quit,
+    Echo(String),
+    ChangeColor(u8, u8, u8), //why can't we use state.color here?
+    // Because this is not a tuple of u8s, this is three separate u8 "args" to a constructor
+    Move(Point)
 }
 
 struct Point {
@@ -37,6 +40,12 @@ impl State {
 
     fn process(&mut self, message: Message) {
         // TODO: create a match expression to process the different message variants
+        match message {
+            Message::Quit => self.quit(),
+            Message::Echo(payload) => self.echo(payload),
+            Message::ChangeColor(p1, p2, p3) => self.change_color((p1, p2, p3)),
+            Message::Move(payload) => self.move_position(payload)
+        }
     }
 }
 
