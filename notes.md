@@ -219,6 +219,13 @@ Rust fmt prefers:
 - insert with overwrite on key collision: `mymap.insert()`
 - insert if key does not exist: `mymap.entry(String::from("foo")).or_insert(50);`
 
+## Error Handling
+
+- many error-prone functions return `Result`
+- handle results with `match`, `unwrap`, `expect`, etc.
+- we can propagate errors up to calling code for handling by `return`ing them explicitly. The `?` operator does this more succinctly.
+- This can only be done in functions that return `Result`, `Option`, or other objects that implement `Try`, unless we handle the result within the function using `match` or similar.
+
 ## Cargo
 
 - `cargo new <program_name>` initiates new project
@@ -322,6 +329,3 @@ Rust fmt prefers:
 - `iter()` method returns each element in a collection
 
 ## Questions
-
-- must the arms of a `match` statement be mutually exclusive? Can `match` match more than one arm?
-  - I suspect it must be mutually exclusive: "The match expression ends [short-circuits] because it has no need to look at the last arm [if it has already found a match]"
