@@ -12,7 +12,12 @@ fn main() {
     let mut tokens = 100;
     let pretend_user_input = "8";
 
-    let cost = total_cost(pretend_user_input)?;
+    // TODO: attempts to return Err in main
+    let cost = match total_cost(pretend_user_input) {
+        Ok(input) => input,
+        // TODO: improve this to describe the input and expectations
+        Err(error) => panic!("Error parsing input"),
+    };
 
     if cost > tokens {
         println!("You can't afford that many!");
