@@ -88,7 +88,7 @@ Rust fmt prefers:
 ### Scalar types
 
 - integers
-  - u<bits> or i<bits>, where bits can be powers of 2 from 8 - 128
+  - `u<bits>` or `i<bits>`, where bits can be powers of 2 from 8 - 128
   - `usize` and `isize` vary based on 32-bit vs 64-bit architectures
   - integer literals may be type-suffixed. e.g. `57u8`
   - integer literals may also have `_` visual separators: `1_000` = 1,000
@@ -148,14 +148,76 @@ Rust fmt prefers:
 - immutable, must be declared at compile time
 - stored on the stack
 - These may actually be primitive compounds? Not sure.
+- indexing into strings is not supported. slicing strings is supported but dangerous.
+- prefer `for c in "mystring".chars() {}` for accessing characters, and `.bytes()` for bytes. Grapheme access is provided by crates outside of std lib.
 
 ### String
 
 - stored on the heap, memory is requested at runtime and must be returned
-- can be created from literals with `let s = String::from("some literal");`
+- can be created from literals with:
+  - `let s = String::from("some literal");`
+  - `let s = "some literal".to_string();`
 - mutable, e.g.: `s.push_str(" appended text");`
-- unlike a literal, `String` is _actually_ a struct holding a pointer, length and capacity values
+- like a Vec, and unlike a literal, `String` is _actually_ a struct holding a pointer, length and capacity values
 - the `String` _struct_ lives on the stack, but points to an address in heap memory
+- grow Strings with:
+  - `+` adds a String and a &str, dereferencing and taking/returning ownership of the String in the process. Not recommended for more than two addends
+  - `format!` macro returns a string just like `println!`: `let s = format("{} is a {}", s1, s2);` Takes actual Strings happily.
+  - `mystring.push_str("other string");` (or `.push()` to add a single char literal)
+
+### Vector type
+
+- contiguous, growable, homogenous array type
+- Vec homogeneity can be hacked by defining an enum with different types, then creating a `Vec<MyEnum>` full of `MyEnum::TypeIActuallyWant("gerbil")`. Also possible to hack this with Trait objects
+- under the hood, Vec is a (pointer, capacity, length) triplet
+- implements Index - values are ordered and indexed from 0
+- implemented with generics; when initializing `Vec::new();`, we must specify a type: `let v: Vec<i32> = Vec::new()`
+- more often, we use the `vec!` macro to declare and initialize with values: `let v = vec![1, 2, 3]` allows rust to infer the default integer type (`i32`)
+- methods include:
+  - `push`
+  - `pop`
+  - `len` (checks size, not capacity)
+  - `append` empties another Vec into `self`
+  - `clear`
+  - `is_empty`
+  - `split_off` breaks Vec into two Vecs at index
+  - `remove` drops a value by index and shifts remaining vals left
+  - `retain` drops elements where `expression == false`, retaining the rest in order
+  - `dedup_by*`
+  - `truncate`
+  - `shrink_to_fit`
+  - `as_mut_slice`
+- when values overflow capacity, all values must be reallocated (which can be slow). Use `Vec::with_capacity` when possible to specify max capacity
+
+#### Accessing Vector Values
+
+- `&vecname[]` syntax returns a reference
+  - e.g. `let third: &u32 = &v[2];`
+  - causes panic if index OOB
+- `vecname.get(2)` returns an `Option<&t>`
+  - e.g.```match v.get(2) {
+             Some(third) => println!("The third element is {}", third),
+             None => println!("There is no third element."),
+           }```
+  - `match` handles the OOB intelligently
+  - standard mutability and ownership rules apply
+  - ... so an immutable reference to a value in `myvec` may not exist when we `push` or `pop`
+  - iterate over a vec with `for i in &myvec {}` or `for i in &mut myvec {}`
+
+## Hash Maps
+
+- `HashMap<K, V>` is _not accessible in prelude_. `use std::collections::HashMap;`
+- K and V are homogenous types
+- Unordered.
+- `HashMap::new()` then `mymap.insert(String::from("foo"), 5);`
+- alternately, use `zip(...).collect()` to make `(K, V)` tuples, then collect them into a `mut mymap: HashMap<_, _>`
+- owned types passed into a Hash Map with `.insert()` will be moved, so no longer accessible in the parent scope. References can be used to circumvent this (with lifetimes). Types that implement `Copy` will be copied.
+
+### Accessing Hash Maps
+
+- `mymap.get()` returns an `Option<&V>`
+- insert with overwrite on key collision: `mymap.insert()`
+- insert if key does not exist: `mymap.entry(String::from("foo")).or_insert(50);`
 
 ## Cargo
 
