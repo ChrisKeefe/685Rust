@@ -10,4 +10,5 @@ After Ch13, revisit https://via.hypothes.is/https://doc.rust-lang.org/book/ch09-
 
 Look at quiz to and the `into()` method
 
-TODO: refactor errors3.rs giving main() a return type
+- refactor errors3.rs giving main() a return type
+- ch 10.02, 3rd highlight mark. Trait return type exercise.
