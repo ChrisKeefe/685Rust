@@ -17,8 +17,16 @@ trait AppendBar {
 }
 
 //TODO: Add your code here
-
-
+impl AppendBar for Vec<String> {
+    fn append_bar(self) -> Self {
+        // Kinda weird that you can return a new vector as Self to get around
+        // the lack of mutability in the method signature. Why this, instead of
+        // using mut self?
+        let mut new_vec = self;
+        new_vec.push(String::from("Bar"));
+        new_vec
+    }
+}
 
 
 #[cfg(test)]

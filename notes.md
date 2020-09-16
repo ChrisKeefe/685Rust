@@ -324,6 +324,99 @@ Rust fmt prefers:
 - At any given time, you may have _either_ one mutable reference _or_ any number of immutable references
 - References must always be valid. (No dangling references to values that have gone out of scope)
 
+## Generics
+
+- available on:
+  - structs:
+
+    ``` Rust
+      struct Point<T, U> {
+        x: T,
+        y: U,
+      }
+    ```
+
+  - enums:
+
+    ``` Rust
+      enum Option<T> {
+        Some(T),
+        None,
+      }
+    ```
+
+  - functions: `fn largest<T>(list: &[T])`
+  - method:
+
+    ``` Rust
+    simpl<T> Point<T> {
+      fn x(&self) -> &T {
+          &self.x
+      }
+    ```
+
+  - must be declared as generic prior to use. E.g. `impl<T> Point<T>`. The compiler knows `Point<T>` is generic only because we have `<T>` after `impl` first.
+
+## Traits
+
+### Defining Traits
+
+``` Rust
+impl Summary for NewsArticle {
+    fn summarize(&self) -> String {
+        format!("{}, by {} ({})", self.headline, self.author, self.location)
+    }
+}
+```
+
+- we can implement a trait on a type iff either the trait or type is local to our crate
+- define a trait with `pub trait Summary { <method signature here>; }
+- if we also define the function body, it is a default implementation.
+
+### Using traits
+
+`impl Trait` syntax (syntactic sugar to shorten trait bound syntax):
+
+``` Rust
+pub fn myFunc(item: &impl MyTrait){
+  item.doMyTraitMethod()
+}
+```
+
+Trait bound syntax:
+
+``` Rust
+pub fn myFunc<T: MyTrait>(item: &T){
+  item.doMyTraitMethod()
+}
+```
+
+`where` clause syntax (for complex trait bounds):
+
+``` Rust
+fn some_function<T, U>(t: &T, u: &U) -> i32
+    where T: Display + Clone,
+          U: Clone + Debug
+{
+```
+
+- More complex trait bound examples here: <https://via.hypothes.is/https://doc.rust-lang.org/book/ch10-02-traits.html#trait-bound-syntax>
+- `&impl MyTrait` can take the place of a concrete type in a function signature, constraining which types that function can take as input
+- `+` between Trait names requires both traits be implemented for that type. (Valid types are the intersection of Trait1 and Trait2 implementers)
+- You can return "generic" types by requiring your return type implement SomeTrait: `fn returns_summarizable() -> impl Summary {...}`
+- "Blanket implementations" implement a trait on all types that satisfy some trait bounds, enabling quick implementations on any relevant types: `impl<T: Display> ToString for T {...}`
+
+## Lifetimes
+
+- `fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {...}` All of `x`, `y`, and the returned `str` must last as long as lifetime `'a`
+- "we’re not changing the lifetimes of any values passed in or returned. Rather, we’re specifying that the borrow checker should reject any values that don’t adhere to these constraints."
+- lifetimes need only be used on parameters that may be returned from the function scope. I think?
+- the lifetime of return vals must be related to the lifetime of function parameters. If we need to return a variable assigned within function scope, it's best to return it as an owned type, so the calling function can clean up.
+
+## Packaging
+
+- `pub` makes traits, structs, maybe other things? accessible for `use` outside the defining module
+
 ## Iterators
 
 - `iter()` method returns each element in a collection
