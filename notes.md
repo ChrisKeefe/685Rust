@@ -244,6 +244,20 @@ Rust fmt prefers:
 - `cargo fix` has the ability to lint and/or update legacy projects to current edition
 - `cargo clean` removes the `target` directory
 
+## Crates
+
+- crates must have unique name, defined in `Cargo.toml` under `[package]` `name = "my_crate_name"`
+- A license is required, description may be required too?
+- Published crates are _permanent_! This protects software that uses your crate as a dependency.
+- _The Book_ mentions using semVer. Is this required? If so, cool?
+- `cargo yank` will prevent new projects from depending on a version of your project. Existing dependencies will still be supported.
+
+## Workspaces
+
+- a set of packages that share one `Cargo.lock` and output directory.
+- Create a `Cargo.toml` with a `[workspace]` header that lists member packages: `members = ["package1", "package2"]`
+- `cargo new package1` etc to create the packages in our workspace
+
 ## Documentation
 
 - `rustup doc` builds and opens Rust documentation locally
@@ -416,6 +430,17 @@ fn some_function<T, U>(t: &T, u: &U) -> i32
 ## Packaging
 
 - `pub` makes traits, structs, maybe other things? accessible for `use` outside the defining module
+- sibling functions, modules, etc. can refer to other sibling modules, functions, etc, even if nonpublic
+- In the case above, children of the nonpublic module must still be marked `pub` to be accessible.
+- `super::somefunc()` allows relative-path access to objects in the parent scope
+- structs may be marked `pub`, but their fields are still private by default
+- enum variants, on the other hand, are public if the enum is public
+- Prefer complete module paths in your code, unless you think it likely you will move groups of namespaced stuff together. In that case, a relative path means you can update calls in fewer places after moving the group.
+- When `use`ing a function path, only specify the path to the parent module. This way, function calls make clear the function isn't locally defined. When `use`ing structs, enums, etc, we can specify the full path unless we have more than one type with the same name.
+- Use external packages by adding a dependency to `Cargo.toml`, and `use`ing the items we want in our code.
+- Nested paths allow us to use many parts of a package cleanly: `use std::{cmp::Ordering, io};`
+- "glob" `*` allows us to use all public items defined by a path. `use std::collections::*;` Probably better to keep the parent namespace.
+- "Using a semicolon after mod front_of_house rather than using a block tells Rust to load the contents of the module from another file with the same name as the module.": `mod front_of_house;`
 
 ## Iterators
 
