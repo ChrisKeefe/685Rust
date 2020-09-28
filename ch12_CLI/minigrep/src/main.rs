@@ -10,9 +10,6 @@ fn main() {
         process::exit(1);
     });
     
-    println!("Searching for \'{}\'", cfig.query);
-    println!("In file \'{}\'\n", cfig.filename);
-
     if let Err(e) = minigrep::run(cfig) {
         println!("Application error: {}", e);
 
