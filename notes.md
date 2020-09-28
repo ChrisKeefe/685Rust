@@ -19,6 +19,7 @@ Rust fmt prefers:
 - function names should be in snake case
 - package names should be in snake case, and _may not_ include spaces
 - whitespace and newlines when method chaining!
+- the Rust book, at least, leaves trailing commas on all lines in e.g. a struct
 
   ``` Rust
   // NO
@@ -33,6 +34,11 @@ Rust fmt prefers:
 
 - function mutates a passed argument, returns a Result (e.g. OK/ERR code)
   - e.g. `std::io::stdin().read_line(&mut some_string);`
+- Separation of Concerns in main: place all program logic in lib.rs. `main.rs::main` holds only:
+  - call command line parsing logic with arg values (or run that logic locally if very small)
+  - set up configuration
+  - call a `run` function in `lib.rs`
+  - handle any errors from `run`
 
 ## Comments
 
@@ -225,6 +231,7 @@ Rust fmt prefers:
 - handle results with `match`, `unwrap`, `expect`, etc.
 - we can propagate errors up to calling code for handling by `return`ing them explicitly. The `?` operator does this more succinctly.
 - This can only be done in functions that return `Result`, `Option`, or other objects that implement `Try`, unless we handle the result within the function using `match` or similar.
+- Ahen trying to assign a value wrapped in a Result which may error, use `unwrap_or_else` or similar. Alternately, use `if let...` if you don't have a `Result`-wrapped value you need to unwrap. See Ch12-03 for details.
 
 ## Cargo
 
@@ -476,5 +483,3 @@ fn some_function<T, U>(t: &T, u: &U) -> i32
 ## Iterators
 
 - `iter()` method returns each element in a collection
-
-## Questions
