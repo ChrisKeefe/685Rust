@@ -19,3 +19,7 @@ Top-level folder
 ## Questions:
 
 Citations must be handled as a set to reduce duplication. Are we trusting bibtex keys to do this, or parsing data from the bibtex records themselves?
+
+## Resources: 
+- q2view
+- unspaghetti (Ben Kaehler and Evan)
