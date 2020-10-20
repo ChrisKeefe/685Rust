@@ -19,6 +19,7 @@ Rust fmt prefers:
 - function names should be in snake case
 - package names should be in snake case, and _may not_ include spaces
 - whitespace and newlines when method chaining!
+- the Rust book, at least, leaves trailing commas on all lines in e.g. a struct
 
   ``` Rust
   // NO
@@ -33,6 +34,11 @@ Rust fmt prefers:
 
 - function mutates a passed argument, returns a Result (e.g. OK/ERR code)
   - e.g. `std::io::stdin().read_line(&mut some_string);`
+- Separation of Concerns in main: place all program logic in lib.rs. `main.rs::main` holds only:
+  - call command line parsing logic with arg values (or run that logic locally if very small)
+  - set up configuration
+  - call a `run` function in `lib.rs`
+  - handle any errors from `run`
 
 ## Comments
 
@@ -225,6 +231,7 @@ Rust fmt prefers:
 - handle results with `match`, `unwrap`, `expect`, etc.
 - we can propagate errors up to calling code for handling by `return`ing them explicitly. The `?` operator does this more succinctly.
 - This can only be done in functions that return `Result`, `Option`, or other objects that implement `Try`, unless we handle the result within the function using `match` or similar.
+- Ahen trying to assign a value wrapped in a Result which may error, use `unwrap_or_else` or similar. Alternately, use `if let...` if you don't have a `Result`-wrapped value you need to unwrap. See Ch12-03 for details.
 
 ## Cargo
 
@@ -243,6 +250,9 @@ Rust fmt prefers:
   - significantly faster for larger projects. good for interim compile checks
 - `cargo fix` has the ability to lint and/or update legacy projects to current edition
 - `cargo clean` removes the `target` directory
+- `cargo test` tells rust to build a test-runner binary, and run all annotated functions
+  - It is possible to pass args to the test runner or the resulting binary, using the `--` separator: `cargo test --args_for_test_runner -- --args for binary`
+  - See these options with `cargo test --help` and `cargo test -- --help`
 
 ## Crates
 
@@ -262,6 +272,34 @@ Rust fmt prefers:
 
 - `rustup doc` builds and opens Rust documentation locally
 - `cargo doc --open` builds and opens documentation locally for all crate dependencies
+
+## Testing
+
+- A test is just a function annotated with `#[test]`
+- `cargo test` tells rust to build a test-runner binary, and run all annotated functions
+- `assert_eq!` and `assert_ne!` use debug formatting and equality test operators. Values we pass them must implement `PartialEq` and `Debug` traits. These are both derivable traits, so #[derive(PartialEq, Debug)] will usually do the job.
+- These macros (and `assert!`) take var args, so we can pass any number of values to them after the required. These are passed to `format!`, so including a format string with `{}`, followed by a variable allows us to report values programatically.
+- we can assert_almost_equals by taking the difference and checking it is less than some threshold value
+- the `should_panic` attribute is placed after the `test` attribute to pass tests that panic. The `expected` parameter allows us to specify an error string a la `assertRaises`. E.g. `#[should_panic(expected="some error message")]`. This string must be _contained by_ our actual error message, but doesn't need to cover the whole message.
+- It's possible to return a `Result` from a test function (don't use `should_panic`), making it possible to use `?` and track multiple different error points in code under test.
+- Defaults:
+  - tests are run in parallel and _should not rely on any shared state_`
+  - the test runner captures output from passing tests to keep test results clean (disable with `cargo test -- --show-output`)
+  - all tests are run
+- Code in a module under `#[cfg(test)]` will only be compiled during testing, and not during `cargo build` or `cargo run`
+- Passing a filter string (`cargo test myfilter`) will run all tests with `myfilter` in their name
+- Annotating slow tests with `#[ignore]` after `#[test]` will skip them unless `cargo test -- --ignored` is called
+
+### Integration testing
+
+- Place integration test files in a `tests` directory at the same level as `src`. This directory gets special treatment by Cargo. E.g.
+  - Nothing in this directory is compiled unless we're using `cargo test`
+- Each test file is treated as an individual crate, and an arbitrary number of these may exist.
+- GOTCHA: The behavior described above breaks the pattern used in all other directories, impacting how we factor utility code out into shared files.
+  - those files will be compiled and run as _test_ files by default
+  - if we place common utilities in a _subdirectory_ of `tests` (e.g. `tests/common/mod.rs`), they don't get compiled as crates or run as integration test sections.
+  - we can then use `mod common;` to use our utils from integration tests files. (see book 11.3 and 7.21)
+- Use `cargo test --test integration_test_file` to run only the tests in one file
 
 ## Std. Lib
 
@@ -445,5 +483,3 @@ fn some_function<T, U>(t: &T, u: &U) -> i32
 ## Iterators
 
 - `iter()` method returns each element in a collection
-
-## Questions
