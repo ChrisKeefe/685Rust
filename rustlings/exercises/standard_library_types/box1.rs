@@ -16,11 +16,9 @@
 //
 // Execute `rustlings hint box1` for hints :)
 
-// I AM NOT DONE
-
 #[derive(PartialEq, Debug)]
 pub enum List {
-    Cons(i32, List),
+    Cons(i32, Box<List>),
     Nil,
 }
 
@@ -30,24 +28,36 @@ fn main() {
 }
 
 pub fn create_empty_list() -> List {
-    unimplemented!()
+    List::Nil
 }
 
 pub fn create_non_empty_list() -> List {
-    unimplemented!()
+    List::Cons(42, Box::new(create_empty_list()))
+}
+
+pub fn create_parent_list(value: i32, child_list: List) -> List {
+    List::Cons(value, Box::new(child_list))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
+    use super::List::*;
+    
     #[test]
     fn test_create_empty_list() {
         assert_eq!(List::Nil, create_empty_list())
     }
-
+    
     #[test]
     fn test_create_non_empty_list() {
         assert_ne!(create_empty_list(), create_non_empty_list())
+    }
+    
+    #[test]
+    fn test_create_specific_nested_list() {
+        let expected = Cons(4, Box::new(Cons(42, Box::new(Nil))));
+        let actual = create_parent_list(4, create_non_empty_list());
+        assert_eq!(expected, actual)
     }
 }
