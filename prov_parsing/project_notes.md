@@ -1,3 +1,20 @@
+## Vision
+Center QIIME 2's provenance tracking capacity as a key strength, by leveraging provenance to improve and simplify scientific practice. 
+- Reduce human error through reliable automation of repeated analysis
+- Improve the reliability of analysis reproduction by automating/validating computing environment creation
+- Enable analysis troubleshooting with diff tools
+- Support institutional academic honesty goals with same
+- Support interface interoperability by allowing reproduction of an analysis across interfaces
+- Improve attribution and simplify citation production by aggregating all relevant methods citations in a common, parseable format
+- Improve methods reporting, by automating the production of plaintext method descriptions.
+
+## Accomplishments
+- specify behavior
+- enumerate constraints
+- specify a system
+- build that system.. which we'll show you today
+
+
 ## Basic Project Objectives
 - Read provenance from one archive into json or similar
 - Write CLI/Artifact API executable script from json
