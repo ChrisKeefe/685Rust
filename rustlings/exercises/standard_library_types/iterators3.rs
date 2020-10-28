@@ -30,9 +30,9 @@ pub fn divide(a: i32, b: i32) -> Result<i32, DivisionError> {
     // https://via.hypothes.is/https://doc.rust-lang.org/book/ch18-03-pattern-syntax.html#extra-conditionals-with-match-guards
 
     match (a, b) {
-        _ if b == 0 => Err(DivisionError::DivideByZero),
+        (_, 0)if b == 0 => Err(DivisionError::DivideByZero),
         (a, b) if a % b ==0 => Ok(a / b),
-        _ => Err(DivisionError::NotDivisible(NotDivisibleError{dividend: a, divisor: b}))
+        (a, b) => Err(DivisionError::NotDivisible(NotDivisibleError{dividend: a, divisor: b}))
     }
 }
 
