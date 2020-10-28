@@ -7,6 +7,9 @@
 // Execute `rustlings hint iterators3` to get some hints!
 // Have fun :-)
 
+// I AM NOT DONE
+use std::error::Error;
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum DivisionError {
     NotDivisible(NotDivisibleError),
@@ -23,14 +26,14 @@ pub struct NotDivisibleError {
 // evenly divisible by b.
 // Otherwise, it should return a suitable error.
 pub fn divide(a: i32, b: i32) -> Result<i32, DivisionError> {
-    if b == 0 {return Err(DivisionError::DivideByZero)};
+    // TODO: refactor into a single match statement using match guards
+    // https://via.hypothes.is/https://doc.rust-lang.org/book/ch18-03-pattern-syntax.html#extra-conditionals-with-match-guards
 
-    let remainder = a % b;
-    match remainder {
-        0 => return Ok(a / b),
-        _ => return Err(DivisionError::NotDivisible(
-                        NotDivisibleError{dividend: a, divisor: b}))
-    };
+    match (a, b) {
+        _ if b == 0 => Err(DivisionError::DivideByZero),
+        (a, b) if a % b ==0 => Ok(a / b),
+        _ => Err(DivisionError::NotDivisible(NotDivisibleError{dividend: a, divisor: b}))
+    }
 }
 
 #[cfg(test)]
