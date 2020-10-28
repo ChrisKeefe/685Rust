@@ -8,6 +8,7 @@
 // Have fun :-)
 
 // I AM NOT DONE
+use std::error::Error;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum DivisionError {
@@ -71,8 +72,11 @@ mod tests {
     fn result_with_list() {
         let numbers = vec![27, 297, 38502, 81];
         let division_results = numbers.into_iter().map(|n| divide(n, 27));
-        let x = division_results.collect::<i32>();
-        // [Ok(1), Ok(11), Ok()
+        let x: Result<Vec<i32>, Box<Error>> =
+            Ok(
+            division_results
+            .map(|ok_val| ok_val.unwrap())
+            .collect());
         assert_eq!(format!("{:?}", x), "Ok([1, 11, 1426, 3])");
     }
 
@@ -80,7 +84,7 @@ mod tests {
     fn list_of_results() {
         let numbers = vec![27, 297, 38502, 81];
         let division_results = numbers.into_iter().map(|n| divide(n, 27));
-        let x = division_results.collect::<i32>();
+        let x: Vec<Result<i32, DivisionError>>= division_results.collect();
         assert_eq!(format!("{:?}", x), "[Ok(1), Ok(11), Ok(1426), Ok(3)]");
     }
 }
