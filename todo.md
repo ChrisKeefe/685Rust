@@ -15,3 +15,4 @@ Look at quiz to and the `into()` method
 
 - refactor errors3.rs giving main() a return type
 - ch 10.02, 3rd highlight mark. Trait return type exercise.
+- ch 17.3 - work through trait objects and oop with "blog" code
