@@ -26,14 +26,14 @@ pub struct NotDivisibleError {
 // evenly divisible by b.
 // Otherwise, it should return a suitable error.
 pub fn divide(a: i32, b: i32) -> Result<i32, DivisionError> {
-    if b == 0 {return Err(DivisionError::DivideByZero)};
+    // TODO: refactor into a single match statement using match guards
+    // https://via.hypothes.is/https://doc.rust-lang.org/book/ch18-03-pattern-syntax.html#extra-conditionals-with-match-guards
 
-    let remainder = a % b;
-    match remainder {
-        0 => return Ok(a / b),
-        _ => return Err(DivisionError::NotDivisible(
-                        NotDivisibleError{dividend: a, divisor: b}))
-    };
+    match (a, b) {
+        (_, 0)if b == 0 => Err(DivisionError::DivideByZero),
+        (a, b) if a % b ==0 => Ok(a / b),
+        (a, b) => Err(DivisionError::NotDivisible(NotDivisibleError{dividend: a, divisor: b}))
+    }
 }
 
 #[cfg(test)]
@@ -72,11 +72,7 @@ mod tests {
     fn result_with_list() {
         let numbers = vec![27, 297, 38502, 81];
         let division_results = numbers.into_iter().map(|n| divide(n, 27));
-        let x: Result<Vec<i32>, Box<Error>> =
-            Ok(
-            division_results
-            .map(|ok_val| ok_val.unwrap())
-            .collect());
+        let x: Result<Vec<i32>, _> = division_results.collect();
         assert_eq!(format!("{:?}", x), "Ok([1, 11, 1426, 3])");
     }
 

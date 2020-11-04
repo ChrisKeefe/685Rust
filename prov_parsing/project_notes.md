@@ -67,3 +67,18 @@ How do we handle parameters that require user interaction, like rarefaction dept
 ## Resources: 
 - q2view
 - unspaghetti (Ben Kaehler and Evan)
+
+
+
+## Inspirations: 
+Justine: I’d love a way to cross reference provenance with PCoA. So, something
+that - and I dont know how the witchcraft works or if its even possible - if I
+pass a like --show-provenance flag, the artefact will propegate a set of UUIDs
+and command names into the PCoA… or maybe it will generate me a metadata file
+wtih the list of commands and UUIDs. …Or, possibly, it will let me give my
+UUIDs human readable alias, although that has a possibillity for failure, too.
+But, I think in this case and possibly others, the ability to map sample and
+pattern back to specific artifact and step would be potentially useful. It at
+least narrows things down
+
+https://forum.qiime2.org/t/merging-libraries-same-dada2-perim/17150/15?u=chriskeefe
