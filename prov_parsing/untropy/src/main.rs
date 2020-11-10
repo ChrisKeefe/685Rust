@@ -1,4 +1,5 @@
 use std::env;
+use std::error::Error;
 use std::process;
 
 #[derive(Debug)]
@@ -28,11 +29,16 @@ fn main() {
         process::exit(1);
     });
 
-    run(config);
+    if let Err(e) = run(config){
+        println!("Runtime Error: {}", e);
+        process::exit(1);
+    };
+    
     process::exit(0);
 }
 
 
-fn run(conf: Config) {
+fn run(conf: Config) -> Result<(), Box<dyn Error>> {
     println!("Now we have a config {:?}", conf);
+    Ok(())
 }
