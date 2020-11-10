@@ -12,7 +12,6 @@ impl Config {
             return Err("Please provide exactly one fp argument");
         }
 
-        // TODO: factor out clone for performance? (book Ch13)
         let fp = args[1].clone();
         println!("Storing fp {} in config.", fp);
 
