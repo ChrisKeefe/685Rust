@@ -1,11 +1,17 @@
 use std::error::Error;
-// TODO: someday
-// use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::fs::File;
 
 #[derive(Debug)]
 pub struct Config {
+    // Not path b/c we don't need anything special from the root filepath.
     pub fp: String,
+}
+
+// TODO: This will probably become serde_json
+#[derive(Debug)]
+pub struct RelevantFiles {
+    pub filenames: Vec<Box<Path>>,
 }
 
 impl Config {
@@ -25,18 +31,25 @@ impl Config {
 pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
     println!("Now we have a config {:?}", conf);
     println!("Calling unzip on {}", conf.fp);
-    let a_name = unzip_result(&conf.fp)?;
-    println!("Something in the archive is named: {}", a_name);
+    let names = get_relevant_paths(&conf.fp)?;
+    println!("Things in the archive are named: ");
+    for i in 1..names.filenames.len() {
+        println!("{}", (*names.filenames[i]).display());
+    }
     Ok(())
 }
 
-pub fn unzip_result(fp: &str) -> Result<&str, Box<dyn Error>> {
+pub fn get_relevant_paths(fp: &str) -> Result<RelevantFiles, Box<dyn Error>> {
     println!("Unzipping {} ", fp);
+    // Get a filepath so we can create a ZipArchive
     let fp = File::open(fp)?;
-    // let reader = std::io::Cursor::new(fp);
-    let mut zip = zip::ZipArchive::new(fp)?;
-    for i in 0..zip.len(){
-        println!("{}", zip.by_index(i).unwrap().name());
-    }
-    Ok(&"gerbils")
+    let zip = zip::ZipArchive::new(fp)?;
+
+    // Remove all non-provenance paths and box it up
+    let filenames = zip.file_names()
+        .filter(|name| name.contains("provenance"))
+        .map(|name| {PathBuf::from(name).into_boxed_path()})
+        .collect();
+
+    Ok(RelevantFiles{ filenames })
 }
