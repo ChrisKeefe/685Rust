@@ -1,6 +1,10 @@
 use std::error::Error;
 use std::path::{Path, PathBuf};
 use std::fs::File;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+// use serde_json::Value::*;
+// use serde_json::Result;
 
 #[derive(Debug)]
 pub struct Config {
@@ -12,6 +16,47 @@ pub struct Config {
 #[derive(Debug)]
 pub struct RelevantFiles {
     pub filenames: Vec<Box<Path>>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ProvNode {
+    UUID: String,
+    sem_type: String,
+    archive: u8,
+    framework: String,
+    format: String,
+    children: Vec<ProvNode>,
+}
+
+impl ProvNode {
+    pub fn new() -> ProvNode {
+        ProvNode {
+            UUID: String::from(""),
+            sem_type: String::from(""),
+            // TODO: Deal with archive versions
+            archive: 5,
+            framework: String::from(""),
+            format: String::from(""),
+            children: Vec::new(),   
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Action {
+    plugin: String,
+    action_name: String,
+    params: HashMap<String, String>,
+}
+
+impl Action {
+    pub fn new() -> Action {
+            Action{
+            plugin: String::from(""),
+            action_name: String::from(""),
+            params: HashMap::new(),
+        }
+    }
 }
 
 impl Config {
@@ -36,7 +81,15 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
     for i in 1..names.filenames.len() {
         println!("{}", (*names.filenames[i]).display());
     }
+
+    let thing = build_json(names);
     Ok(())
+}
+
+pub fn build_json(filenames: RelevantFiles) -> ProvNode {
+    // TODO: implement
+    let result = ProvNode::new();
+    result
 }
 
 pub fn get_relevant_paths(fp: &str) -> Result<RelevantFiles, Box<dyn Error>> {
