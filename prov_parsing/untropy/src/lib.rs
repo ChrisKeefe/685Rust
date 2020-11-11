@@ -20,7 +20,7 @@ pub struct RelevantFiles {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProvNode {
-    UUID: String,
+    uuid: String,
     sem_type: String,
     archive: u8,
     framework: String,
@@ -31,7 +31,7 @@ pub struct ProvNode {
 impl ProvNode {
     pub fn new() -> ProvNode {
         ProvNode {
-            UUID: String::from(""),
+            uuid: String::from(""),
             sem_type: String::from(""),
             // TODO: Deal with archive versions
             archive: 5,
