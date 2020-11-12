@@ -1,5 +1,5 @@
 // TODO: remove
-#![allow(warnings)]
+// #![allow(warnings)]
 
 use std::error::Error;
 use std::fs::File;
@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 // use std::fs;
 // use std::io;
-// use serde_json::Value::*;
-// use serde_json::Result;
+// use serde_yaml::Value;
+// use serde_yaml::Result;
 
 #[derive(Debug)]
 pub struct Config {
@@ -17,13 +17,18 @@ pub struct Config {
     pub fp: String,
 }
 
-// TODO: This will probably become serde_json
 #[derive(Debug)]
 pub struct RelevantFiles {
     pub filenames: Vec<String>,
     pub contents: Vec<String>,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Dummy {
+    yaml: serde_yaml::Value
+}
+
+// TODO: This will probably become serde_yaml
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProvNode {
     uuid: String,
@@ -82,52 +87,36 @@ impl Config {
 pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
     println!("Now we have a config {:?}", conf);
     println!("Calling unzip on {}", conf.fp);
-    let action_fps = get_relevant_files(&conf.fp)?;
+    let relevant_files = get_relevant_files(&conf.fp)?;
     println!("Things in the archive are named: ");
-    for i in 1..action_fps.filenames.len() {
-        println!("{}", action_fps.filenames[i]);
+    for i in 1..relevant_files.filenames.len() {
+        println!("{}", relevant_files.filenames[i]);
     }
-    println!("{}", action_fps.contents[1]);
+    println!("\nFirst archive contains: ");
+    println!("{}", relevant_files.contents[1]);
 
-    // let actions = scrape_actions(action_fps)?;
+    // let actions = serialize_actions(action_fps)?;
     // let tree = build_tree(actions);
 
     Ok(())
 }
 
-// pub fn scrape_actions(mut action_filenames: RelevantFiles)
-//          -> Result<Vec<Action>, Box<dyn Error>> {
-//     // get one filepath
-//     let first_fp = &(action_filenames.filenames.pop().unwrap());
-//     println!("First fp: {}", first_fp.display());
+pub fn serialize_actions(mut action_filenames: RelevantFiles)
+         -> Result<Vec<Action>, Box<dyn Error>> {
+    // get one filepath
+    let first_fp = &(action_filenames.filenames.pop().unwrap());
+    println!("First fp: {}", first_fp);
     
-//     // unzip and read
-//     // let fp = File::open(&first_fp)?;
-//     // let mut zip = zip::ZipArchive::new(&fp)?;
-//     // let file = zip.by_name(first_fp.to_str().unwrap())?;
-//     // let contents = std::fs::read(file)?;
-//     // println!("{}", contents[0]);
-
-
-
-
-//     // let mut action = HashMap::new();
-//     // action.insert("Gerbil".to_string(),
-//     //               "Guts".to_string());
-//     // println!("{:?}", action);
-
-//     Ok(vec![Action::new()])
-// }
-
-
-pub fn build_tree(actions: Vec<Action>) -> ProvNode {
-    // TODO: implement
-    let result = ProvNode::new();
-    result
+    Ok(vec![Action::new()])
 }
 
-// TODO: if we had multiple filters, we could make this generic, and pass them
-// in go get whatever subset of results we want
+
+// pub fn build_tree(actions: Vec<Action>) -> ProvNode {
+//     // TODO: implement
+//     let result = ProvNode::new();
+//     result
+// }
+
 pub fn get_relevant_files(fp: &str) -> Result<RelevantFiles, Box<dyn Error>> {
     println!("Unzipping {} ", fp);
     // Get a filepath and create a ZipArchive
@@ -145,7 +134,7 @@ pub fn get_relevant_files(fp: &str) -> Result<RelevantFiles, Box<dyn Error>> {
     let mut tmp_contents = String::new();
     let mut contents = Vec::new();
     for i in 0..filenames.len() {
-        zip.by_name(&filenames[i]).unwrap().read_to_string(&mut tmp_contents);
+        zip.by_name(&filenames[i]).unwrap().read_to_string(&mut tmp_contents).unwrap();
         contents.push(String::from(&tmp_contents));
     }
 
