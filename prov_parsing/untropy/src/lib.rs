@@ -92,11 +92,11 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
     let relevant_files = get_relevant_files(&conf.fp)?;
     println!("Things in the archive are named: ");
     // TODO: remove diagnostics
-    // for i in 0..relevant_files.filenames.len() {
     // println!("#######################");
+    for i in 0..relevant_files.filenames.len() {
     // for i in 0..1 {
-    //     println!("{}", relevant_files.filenames[i]);
-    // }
+        println!("{}", relevant_files.filenames[i]);
+    }
     // println!("#######################");
     // println!("\nFirst archive contains: ");
     // println!("{}", relevant_files.contents[0]);
@@ -109,6 +109,7 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
 }
 
 pub fn serialize_actions(files: RelevantFiles) -> Result<Action, serde_yaml::Error> {
+    println!("HIHI!");
     let result: Action = serde_yaml::from_str(&files.contents[0])?;
     // println!("{:?}", result);
 
@@ -135,7 +136,9 @@ pub fn get_relevant_files(fp: &str) -> Result<RelevantFiles, Box<dyn Error>> {
     // Create a positive mask for relevant files
     let filenames: Vec<String> = zip.file_names()
         .filter(|name| name.contains("provenance") 
-                     & name.contains("action.yaml"))
+                     & (name.contains("action.yaml")
+                     |  name.contains("metadata.yaml")
+                     |  name.contains("citations.bib")))
         .map(|name| {String::from(name)})
         .collect();
 
