@@ -1,10 +1,12 @@
+// TODO: remove
+#![allow(warnings)]
+
 use std::error::Error;
-// use std::path::{Path, PathBuf};
-// use std::fs;
 use std::fs::File;
 use std::io::Read;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+// use std::fs;
 // use std::io;
 // use serde_json::Value::*;
 // use serde_json::Result;
@@ -18,6 +20,7 @@ pub struct Config {
 // TODO: This will probably become serde_json
 #[derive(Debug)]
 pub struct RelevantFiles {
+    pub filenames: Vec<String>,
     pub contents: Vec<String>,
 }
 
@@ -80,10 +83,11 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
     println!("Now we have a config {:?}", conf);
     println!("Calling unzip on {}", conf.fp);
     let action_fps = get_relevant_files(&conf.fp)?;
-    // println!("Things in the archive are named: ");
-    // for i in 1..action_fps.filenames.len() {
-    //     println!("{}", (*action_fps.filenames[i]).display());
-    // }
+    println!("Things in the archive are named: ");
+    for i in 1..action_fps.filenames.len() {
+        println!("{}", action_fps.filenames[i]);
+    }
+    println!("{}", action_fps.contents[1]);
 
     // let actions = scrape_actions(action_fps)?;
     // let tree = build_tree(actions);
@@ -122,7 +126,7 @@ pub fn build_tree(actions: Vec<Action>) -> ProvNode {
     result
 }
 
-// TODO: if we have multiple filters, we could make this generic, and pass them
+// TODO: if we had multiple filters, we could make this generic, and pass them
 // in go get whatever subset of results we want
 pub fn get_relevant_files(fp: &str) -> Result<RelevantFiles, Box<dyn Error>> {
     println!("Unzipping {} ", fp);
@@ -130,25 +134,20 @@ pub fn get_relevant_files(fp: &str) -> Result<RelevantFiles, Box<dyn Error>> {
     let fp = File::open(fp)?;
     let mut zip = zip::ZipArchive::new(fp)?;
 
-    // Create a mask for relevant files
-    // let filenames = zip.file_names()
-    //     .filter(|name| name.contains("provenance") & name.contains("action.yaml"));
-
+    // Create a positive mask for relevant files
+    let filenames: Vec<String> = zip.file_names()
+        .filter(|name| name.contains("provenance") 
+                     & name.contains("action.yaml"))
+        .map(|name| {String::from(name)})
+        .collect();
 
     // Read files into memory
     let mut tmp_contents = String::new();
     let mut contents = Vec::new();
-    for i in 0..zip.len() {
-        zip.by_index(i).unwrap().read_to_string(&mut tmp_contents);
+    for i in 0..filenames.len() {
+        zip.by_name(&filenames[i]).unwrap().read_to_string(&mut tmp_contents);
         contents.push(String::from(&tmp_contents));
     }
 
-    // let remaining_filenames = filenames
-    //     .map(|name| {String::from(name)})
-    //     .collect();
-
-    // TODO: remove - visual test for valid read
-    println!("{:?}", contents[0]);
-
-    Ok(RelevantFiles{ contents })
+    Ok(RelevantFiles{ filenames, contents })
 }
