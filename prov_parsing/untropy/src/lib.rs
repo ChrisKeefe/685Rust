@@ -89,25 +89,25 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
     println!("Calling unzip on {}", conf.fp);
     let relevant_files = get_relevant_files(&conf.fp)?;
     println!("Things in the archive are named: ");
-    for i in 1..relevant_files.filenames.len() {
-        println!("{}", relevant_files.filenames[i]);
-    }
-    println!("\nFirst archive contains: ");
-    println!("{}", relevant_files.contents[1]);
+    // TODO: remove diagnostics
+    // for i in 1..relevant_files.filenames.len() {
+    //     println!("{}", relevant_files.filenames[i]);
+    // }
+    // println!("\nFirst archive contains: ");
+    // println!("{}", relevant_files.contents[1]);
 
-    // let actions = serialize_actions(action_fps)?;
+    let actions = serialize_actions(relevant_files)?;
     // let tree = build_tree(actions);
 
     Ok(())
 }
 
-pub fn serialize_actions(mut action_filenames: RelevantFiles)
-         -> Result<Vec<Action>, Box<dyn Error>> {
-    // get one filepath
-    let first_fp = &(action_filenames.filenames.pop().unwrap());
-    println!("First fp: {}", first_fp);
+pub fn serialize_actions(files: RelevantFiles) -> Result<Dummy, serde_yaml::Error> {
+    let result = serde_yaml::from_str(&files.contents[0])?;
+    println!("SOME_YAML: {:?}", result);
+
     
-    Ok(vec![Action::new()])
+    Ok(Dummy{yaml: result})
 }
 
 
