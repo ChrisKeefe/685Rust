@@ -93,10 +93,11 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
     println!("Things in the archive are named: ");
     // TODO: remove diagnostics
     // for i in 1..relevant_files.filenames.len() {
-    //     println!("{}", relevant_files.filenames[i]);
-    // }
-    // println!("\nFirst archive contains: ");
-    // println!("{}", relevant_files.contents[1]);
+    for i in 1..1 {
+        println!("{}", relevant_files.filenames[i]);
+    }
+    println!("\nFirst archive contains: ");
+    println!("{}", relevant_files.contents[1]);
 
     let actions = serialize_actions(relevant_files)?;
     // let tree = build_tree(actions);
@@ -106,7 +107,7 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
 
 pub fn serialize_actions(files: RelevantFiles) -> Result<Action, serde_yaml::Error> {
     let result: Action = serde_yaml::from_str(&files.contents[0])?;
-    println!("{:?}", result);
+    // println!("{:?}", result);
 
     
     Ok(result)
