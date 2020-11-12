@@ -92,12 +92,15 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
     let relevant_files = get_relevant_files(&conf.fp)?;
     println!("Things in the archive are named: ");
     // TODO: remove diagnostics
-    // for i in 1..relevant_files.filenames.len() {
-    for i in 1..1 {
-        println!("{}", relevant_files.filenames[i]);
-    }
-    println!("\nFirst archive contains: ");
-    println!("{}", relevant_files.contents[1]);
+    // for i in 0..relevant_files.filenames.len() {
+    // println!("#######################");
+    // for i in 0..1 {
+    //     println!("{}", relevant_files.filenames[i]);
+    // }
+    // println!("#######################");
+    // println!("\nFirst archive contains: ");
+    // println!("{}", relevant_files.contents[0]);
+    // println!("#######################");
 
     let actions = serialize_actions(relevant_files)?;
     // let tree = build_tree(actions);
