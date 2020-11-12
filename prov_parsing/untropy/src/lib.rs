@@ -5,7 +5,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::Read;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+// use std::collections::HashMap;
 // use std::fs;
 // use std::io;
 // use serde_yaml::Value;
@@ -17,57 +17,59 @@ pub struct Config {
     pub fp: String,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Action {
+    // No need to capture Execution or Environment details for now
+    // serde gracefully drops missing keys by default.
+    // execution: Execution,
+    action: ActionDetails,
+    // environment: serde_yaml::Value
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ActionDetails {
+    #[serde(rename="type")]
+    semantic_type: String,
+    plugin: String,
+    action: String,
+    inputs: serde_yaml::Value,
+    parameters: serde_yaml::Value,
+    #[serde(rename="output-name")]
+    output_name: String,
+    // #[serde(rename="alias-of")]
+    // alias_of: String,
+    // params: HashMap<String, String>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ActionMetadata {
+    uuid: String,
+    #[serde(rename="type")]
+    semantic_type: String,
+    // This could probably be an Option(String), but we'll capture nulls as 
+    // strings for now
+    format: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Execution {
+    uuid: String,
+    runtime: serde_yaml::Value,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ProvNode {
+    metadata: ActionMetadata,
+    details: Action,
+    children: Vec<ProvNode>,
+}
+
 #[derive(Debug)]
 pub struct RelevantFiles {
     pub filenames: Vec<String>,
     pub contents: Vec<String>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Dummy {
-    yaml: serde_yaml::Value
-}
-
-// TODO: This will probably become serde_yaml
-#[derive(Debug, Deserialize, Serialize)]
-pub struct ProvNode {
-    uuid: String,
-    sem_type: String,
-    archive: u8,
-    framework: String,
-    format: String,
-    children: Vec<ProvNode>,
-}
-
-impl ProvNode {
-    pub fn new() -> ProvNode {
-        ProvNode {
-            uuid: String::from(""),
-            sem_type: String::from(""),
-            // TODO: Deal with archive versions
-            archive: 5,
-            framework: String::from(""),
-            format: String::from(""),
-            children: Vec::new(),   
-        }
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Action {
-    plugin: String,
-    action_name: String,
-    params: HashMap<String, String>,
-}
-
-impl Action {
-    pub fn new() -> Action {
-            Action{
-            plugin: String::from(""),
-            action_name: String::from(""),
-            params: HashMap::new(),
-        }
-    }
+    // TODO: we need some kind of tuple/struct that describes 
+    // metadata.yaml/action.yaml pairs. Do we even need filenames?
 }
 
 impl Config {
@@ -102,17 +104,17 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn serialize_actions(files: RelevantFiles) -> Result<Dummy, serde_yaml::Error> {
-    let result = serde_yaml::from_str(&files.contents[0])?;
-    println!("SOME_YAML: {:?}", result);
+pub fn serialize_actions(files: RelevantFiles) -> Result<Action, serde_yaml::Error> {
+    let result: Action = serde_yaml::from_str(&files.contents[0])?;
+    println!("{:?}", result);
 
     
-    Ok(Dummy{yaml: result})
+    Ok(result)
 }
 
 
 // pub fn build_tree(actions: Vec<Action>) -> ProvNode {
-//     // TODO: implement
+//     // TODO: implementp)?;
 //     let result = ProvNode::new();
 //     result
 // }
@@ -122,6 +124,9 @@ pub fn get_relevant_files(fp: &str) -> Result<RelevantFiles, Box<dyn Error>> {
     // Get a filepath and create a ZipArchive
     let fp = File::open(fp)?;
     let mut zip = zip::ZipArchive::new(fp)?;
+
+// TODO: Check the QIIME2 archive version, and handle appropriately.
+// For now, that probably means error if version != 5
 
     // Create a positive mask for relevant files
     let filenames: Vec<String> = zip.file_names()
