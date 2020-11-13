@@ -4,19 +4,14 @@
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
-// use std::path::PathBuf;
-// use itertools::izip;
 use serde::{Deserialize, Serialize};
-// use std::collections::HashMap;
-// use std::fs;
-// use std::io;
-// use serde_yaml::Value;
-// use serde_yaml::Result;
 use std::collections::HashMap;
+// use std::path::PathBuf;
 
+/// A Config struct to store command line arguments
 #[derive(Debug)]
 pub struct Config {
-    // Not path b/c we don't need anything special from the root filepath.
+/// Not a Path b/c we don't need anything special from the root filepath.
     pub fp: String,
 }
 
@@ -37,11 +32,9 @@ impl Config {
 /// Select contents of an action.yaml file
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Action {
-    // No need to capture Execution or Environment details for now
-    // serde gracefully drops missing keys by default.
-    // execution: Execution,
     action: ActionDetails,
-    // environment: serde_yaml::Value
+    // No need to capture the details in Execution or Environment objects for now
+    // serde gracefully drops missing keys by default.
 }
 
 /// Data from the action tag in an action.yaml
@@ -67,8 +60,7 @@ pub struct ActionMetadata {
     uuid: String,
     #[serde(rename="type")]
     semantic_type: String,
-    // This could probably be an Option(String), but we'll capture nulls as 
-    // strings for now
+    // We'll capture nulls as Strings instead of Option(String)s for simplicity
     format: String,
 }
 
@@ -82,29 +74,20 @@ pub struct ProvNode {
 }
 
 impl ProvNode {
-    // pub fn new(metadata: ActionMetadata, action: Action) -> ProvNode {
-    //     ProvNode {
-    //         metadata,
-    //         action,
-    //         citations: None,
-    //         children: None,
-    //     }
-    // }
-
-    pub fn new(filenames: Vec<String>) -> Result<ProvNode, serde_yaml::Error> {
+    pub fn new(filenames: Vec<String>, rel_files: RelevantFiles) 
+            -> Result<ProvNode, serde_yaml::Error> {
         let mut metadata: Option<ActionMetadata> = None;
         let mut action: Option<Action> = None;
         let mut citations = None;
+        let key_err = "Key Error in ProvNode::new(); Filepath does not exist in RelevantFiles";
         for i in filenames {
+            let content = rel_files.0.get(&i).ok_or_else(|| {key_err});
             if i.contains("metadata.yaml") {
-                println!("in metadata");
-                metadata = serde_yaml::from_str(&i)?;
+                metadata = serde_yaml::from_str(content.unwrap())?;
             } else if i.contains("action.yaml") {
-                println!("in action");
-                action = serde_yaml::from_str(&i)?;
+                action = serde_yaml::from_str(content.unwrap())?;
             } else if i.contains("citations.bib") {
-                println!("in citations");
-                citations = Some(i);
+                citations = Some(String::from(content.unwrap()));
             }
         }
 
@@ -112,7 +95,7 @@ impl ProvNode {
     }
 }
 
-/// A HashMap of filename: content pairs
+/// A HashMap of filename:content pairs
 #[derive(Debug)]
 pub struct RelevantFiles ( HashMap<String, String> );
 
@@ -131,43 +114,33 @@ impl RelevantFiles {
     }
 }
 
-// #[derive(Debug)]
-// pub struct NamedFile ( HashMap<String, String> );
-
-// impl NamedFile {
-//     pub fn new(filename: String, content: String) -> NamedFile {
-//         NamedFile (val)
-//     }
-// }
-
 pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
     println!("Now we have a config {:?}", conf);
     println!("Calling unzip on {}", conf.fp);
-    let relevant_files = get_relevant_files(&conf.fp)?;
-    // TODO: remove diagnostics
-    // println!("\nFirst archive contains: ");
-    // println!("{}", relevant_files.contents[0]);
-    
+    let relevant_files = get_relevant_files(&conf.fp)?;    
     let actions = serialize_actions(relevant_files)?;
+
+    // println!("{:?}\n", actions[0].citations);
+    // println!("{:?}\n", actions[0].action);
+    // println!("{:?}\n", actions[0].metadata);
+    // println!("{:?}\n", actions[0].children);
     // let tree = build_tree(actions);
     
     Ok(())
 }
 
 /// Groups related files and parses them into ProvNodes
-/// 
 /// Returns: A vector of ProvNodes, which can be organized into a tree elsewhere
-pub fn serialize_actions(rel_files: RelevantFiles) -> Result<ProvNode, serde_yaml::Error> {
+pub fn serialize_actions(relevant_files: RelevantFiles) -> Result<Vec<ProvNode>, serde_yaml::Error> {
+    // unpack the HashMap so we can access it here without indirection
+    let RelevantFiles(rel_files) = &relevant_files;
+
     // use filenames to group metadata, citation, and action files
-    let RelevantFiles(rel_files) = rel_files;
-    let all_filenames = rel_files.keys();
-    
     // Separate terminal and other actions
     let mut leaf_files = Vec::new();
     let mut other_files = Vec::new();
     
     for filename in rel_files.keys() {
-        // println!("{}", tmp_filename);
         if filename.contains("artifacts"){
             other_files.push(filename.clone());
         } else {
@@ -176,33 +149,22 @@ pub fn serialize_actions(rel_files: RelevantFiles) -> Result<ProvNode, serde_yam
     }
 
     // println!("\n\n");
-    // for file in leaf_files {
-    //     println!("{}", file);
-    // }
-    
-    // println!("\n\n");
-    // for file in other_files {
+    // for file in &other_files {
     //     println!("{}", file);
     // }
     
     // Capture terminal action
-    // let mut leaf = ProvNode::New();
-    // Capture terminal action
-    // let mut leaf = ProvNode::New();
+    let leaf = ProvNode::new(leaf_files, relevant_files)?;
 
     // // Turn a string into an owned PathBuf
     // println!("{}", PathBuf::from(&files.filenames[0]).display());
     // let mut filenames = files.filenames.iter();
     // let filenames = filenames.map(|fp| PathBuf::from(fp));
     // we can zip iterators with itertools.izip
-
     
     // serialize each and pack them in ProvNodes
     
-    let result = ProvNode::new(leaf_files)?;
-    // println!("{:?}", result);
-    
-    
+    let result = vec!(leaf);
     Ok(result)
 }
 
