@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 // use std::io;
 // use serde_yaml::Value;
 // use serde_yaml::Result;
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct Config {
@@ -111,28 +112,33 @@ impl ProvNode {
     }
 }
 
-// TODO: Would this work better as a HashMap? Or maybe we drop this type, and
-// just build a Vec<NamedFile>
+/// A HashMap of filename: content pairs
 #[derive(Debug)]
-pub struct RelevantFiles ( Vec<NamedFile> );
+pub struct RelevantFiles ( HashMap<String, String> );
 
 impl RelevantFiles {
     pub fn len(&self) -> usize {
         self.0.len()
     }
-}
 
-#[derive(Debug)]
-pub struct NamedFile {
-    pub filename: String,
-    pub content: String,
-}
+    pub fn new() -> RelevantFiles {
+        let val = HashMap::new();
+        RelevantFiles ( val )
+    }
 
-impl NamedFile {
-    pub fn new(filename: String, content: String) -> NamedFile {
-        NamedFile {filename, content}
+    pub fn insert(&mut self, filename: String, content: String) {
+        self.0.insert(filename, content);
     }
 }
+
+// #[derive(Debug)]
+// pub struct NamedFile ( HashMap<String, String> );
+
+// impl NamedFile {
+//     pub fn new(filename: String, content: String) -> NamedFile {
+//         NamedFile (val)
+//     }
+// }
 
 pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
     println!("Now we have a config {:?}", conf);
@@ -153,18 +159,19 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
 /// Returns: A vector of ProvNodes, which can be organized into a tree elsewhere
 pub fn serialize_actions(rel_files: RelevantFiles) -> Result<ProvNode, serde_yaml::Error> {
     // use filenames to group metadata, citation, and action files
+    let RelevantFiles(rel_files) = rel_files;
+    let all_filenames = rel_files.keys();
     
     // Separate terminal and other actions
     let mut leaf_files = Vec::new();
     let mut other_files = Vec::new();
     
-    for i in 0..rel_files.len() {
-        let tmp_filename = rel_files.0[i].filename.clone();
+    for filename in rel_files.keys() {
         // println!("{}", tmp_filename);
-        if tmp_filename.contains("artifacts"){
-            other_files.push(tmp_filename);
+        if filename.contains("artifacts"){
+            other_files.push(filename.clone());
         } else {
-            leaf_files.push(tmp_filename);
+            leaf_files.push(filename.clone());
         }
     }
 
@@ -216,9 +223,9 @@ pub fn get_relevant_files(fp: &str) -> Result<RelevantFiles, Box<dyn Error>> {
     // Get a filepath and create a ZipArchive
     let fp = File::open(fp)?;
     let mut zip = zip::ZipArchive::new(fp)?;
-
-// TODO: Check the QIIME2 archive version, and handle appropriately.
-// For now, that probably means error if version != 5
+    
+    // TODO: Check the QIIME2 archive version, and handle appropriately.
+    // For now, that probably means error if version != 5
 
     // Create a positive mask for relevant files
     let filenames: Vec<String> = zip.file_names()
@@ -230,12 +237,12 @@ pub fn get_relevant_files(fp: &str) -> Result<RelevantFiles, Box<dyn Error>> {
         .collect();
 
     // Read files into memory, mapping filename to contents
-    let mut files = Vec::new();
+    let mut rel_files = RelevantFiles::new();
     for i in 0..filenames.len() {
         let mut tmp_contents = String::new();
         zip.by_name(&filenames[i]).unwrap().read_to_string(&mut tmp_contents).unwrap();
-        files.push(NamedFile::new(filenames[i].clone(), tmp_contents));
+        rel_files.insert(filenames[i].clone(), tmp_contents);
     }
 
-    Ok(RelevantFiles( files ))
+    Ok( rel_files )
 }
