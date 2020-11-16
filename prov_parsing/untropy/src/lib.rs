@@ -26,8 +26,6 @@ impl Config {
         }
 
         let fp = args[1].clone();
-        println!("Storing fp {} in config.", fp);
-
         Ok(Config { fp })
     }
 }
@@ -69,6 +67,7 @@ pub struct ActionMetadata {
 /// One node of a provenance tree #[derive(Debug, Deserialize, Serialize)]
 #[derive(Debug)]
 pub struct ProvNode {
+    uuid: Option<String>,
     metadata: Option<ActionMetadata>,
     action: Option<Action>,
     citations: Option<String>,
@@ -93,7 +92,10 @@ impl ProvNode {
             }
         }
 
-        Ok(ProvNode { metadata, action, citations, children: None })
+        // TODO: Handle error more clearly
+        let uuid = Some(metadata.as_ref().unwrap().uuid.clone());
+
+        Ok(ProvNode { uuid, metadata, action, citations, children: None })
     }
 }
 
@@ -120,11 +122,10 @@ impl ArchiveContents {
 
 /// Main run function for the program - primary program logic lives here
 pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
-    println!("Now we have a config {:?}", conf);
-    println!("Calling unzip on {}", conf.fp);
     let relevant_files = get_relevant_files(&conf.fp)?;    
     let actions = serialize_actions(relevant_files)?;
 
+    println!("{:?}", actions[0].uuid);
     println!("{:?}\n", actions[0].citations);
     println!("{:?}\n", actions[0].action);
     println!("{:?}\n", actions[0].metadata);
@@ -134,22 +135,20 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-/// Groups related files and parses them into ProvNodes
+/// Groups related files by Action UUID and parses them into ProvNodes
 /// Returns: A vector of ProvNodes, which can be organized into a tree elsewhere
 pub fn serialize_actions(relevant_files: ArchiveContents) -> Result<Vec<ProvNode>,
                                                             serde_yaml::Error> {
-    println!("Root UUID is: {}", relevant_files.root_uuid);
-
     // use filenames to group metadata, citation, and action files
     // Separate terminal and other actions
-    let mut leaf_files = Vec::new();
-    let mut other_files = Vec::new();
+    let mut leaf_filenames = Vec::new();
+    let mut other_filenames = Vec::new();
     
     for filename in relevant_files.file_contents.keys() {
         if filename.contains("artifacts"){
-            other_files.push(filename.clone());
+            other_filenames.push(filename.clone());
         } else {
-            leaf_files.push(filename.clone());
+            leaf_filenames.push(filename.clone());
         }
     }
 
@@ -166,7 +165,7 @@ pub fn serialize_actions(relevant_files: ArchiveContents) -> Result<Vec<ProvNode
     // push it onto the result vector
  
     // Capture terminal action
-    let leaf = ProvNode::new(leaf_files, relevant_files)?;
+    let leaf = ProvNode::new(leaf_filenames, relevant_files)?;
 
     // // Turn a string into an owned PathBuf
     // println!("{}", PathBuf::from(&files.filenames[0]).display());
@@ -192,7 +191,6 @@ pub fn serialize_actions(relevant_files: ArchiveContents) -> Result<Vec<ProvNode
 /// 
 /// Requires: user pass path to a valid .qza or .qzv with archive version == 5
 pub fn get_relevant_files(fp: &str) -> Result<ArchiveContents, Box<dyn Error>> {
-    println!("Unzipping {} ", fp);
     // Get a filepath and create a ZipArchive
     let fp = File::open(fp)?;
     let mut zip = zip::ZipArchive::new(fp)?;
