@@ -64,8 +64,31 @@ pub struct ActionMetadata {
     // We'll capture nulls as Strings instead of Option(String)s for simplicity
     format: String,
 }
-/// One node of a provenance tree #[derive(Debug, Deserialize, Serialize)]
+
+/// Contents of a QIIME 2 Archive, including Archive UUID and a HashMap of
+/// filename: content pairs
 #[derive(Debug)]
+pub struct ArchiveContents { root_uuid: String,
+                             file_contents: HashMap<String, String> }
+
+impl ArchiveContents {
+    pub fn len(&self) -> usize {
+        self.file_contents.len()
+    }
+
+    pub fn new(root_uuid: &str) -> ArchiveContents {
+        let root_uuid = String::from(root_uuid);
+        let file_contents = HashMap::new();
+        ArchiveContents { root_uuid, file_contents }
+    }
+
+    pub fn insert(&mut self, filename: String, content: String) {
+        self.file_contents.insert(filename, content);
+    }
+}
+
+/// One node of a provenance tree
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ProvNode {
     uuid: Option<String>,
     metadata: Option<ActionMetadata>,
@@ -92,31 +115,10 @@ impl ProvNode {
             }
         }
 
-        // TODO: Handle error more clearly
+        // TODO: Handle errors more explicitly
         let uuid = Some(metadata.as_ref().unwrap().uuid.clone());
 
         Ok(ProvNode { uuid, metadata, action, citations, children: None })
-    }
-}
-
-/// A HashMap of filename:content pairs
-#[derive(Debug)]
-pub struct ArchiveContents { root_uuid: String,
-                           file_contents: HashMap<String, String> }
-
-impl ArchiveContents {
-    pub fn len(&self) -> usize {
-        self.file_contents.len()
-    }
-
-    pub fn new(root_uuid: &str) -> ArchiveContents {
-        let root_uuid = String::from(root_uuid);
-        let file_contents = HashMap::new();
-        ArchiveContents { root_uuid, file_contents }
-    }
-
-    pub fn insert(&mut self, filename: String, content: String) {
-        self.file_contents.insert(filename, content);
     }
 }
 
@@ -139,8 +141,8 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
 /// Returns: A vector of ProvNodes, which can be organized into a tree elsewhere
 pub fn serialize_actions(relevant_files: ArchiveContents) -> Result<Vec<ProvNode>,
                                                             serde_yaml::Error> {
-    // use filenames to group metadata, citation, and action files
-    // Separate terminal and other actions
+    // use filenames to group metadata, citation, and action files into
+    // terminal action (our archive root/analysis leaf) and other actions
     let mut leaf_filenames = Vec::new();
     let mut other_filenames = Vec::new();
     
