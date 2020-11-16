@@ -76,12 +76,12 @@ pub struct ProvNode {
 }
 
 impl ProvNode {
-    pub fn new(filenames: Vec<String>, rel_files: RelevantFiles) 
+    pub fn new(filenames: Vec<String>, rel_files: ArchiveContents) 
             -> Result<ProvNode, serde_yaml::Error> {
         let mut metadata: Option<ActionMetadata> = None;
         let mut action: Option<Action> = None;
         let mut citations = None;
-        let key_err = "Key Error in ProvNode::new(); Filepath does not exist in RelevantFiles";
+        let key_err = "Key Error in ProvNode::new(); Filepath does not exist in ArchiveContents";
         for i in filenames {
             let content = rel_files.file_contents.get(&i).ok_or_else(|| {key_err});
             if i.contains("metadata.yaml") {
@@ -99,18 +99,18 @@ impl ProvNode {
 
 /// A HashMap of filename:content pairs
 #[derive(Debug)]
-pub struct RelevantFiles { root_uuid: String,
+pub struct ArchiveContents { root_uuid: String,
                            file_contents: HashMap<String, String> }
 
-impl RelevantFiles {
+impl ArchiveContents {
     pub fn len(&self) -> usize {
         self.file_contents.len()
     }
 
-    pub fn new(root_uuid: &str) -> RelevantFiles {
+    pub fn new(root_uuid: &str) -> ArchiveContents {
         let root_uuid = String::from(root_uuid);
         let file_contents = HashMap::new();
-        RelevantFiles { root_uuid, file_contents }
+        ArchiveContents { root_uuid, file_contents }
     }
 
     pub fn insert(&mut self, filename: String, content: String) {
@@ -136,7 +136,7 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
 
 /// Groups related files and parses them into ProvNodes
 /// Returns: A vector of ProvNodes, which can be organized into a tree elsewhere
-pub fn serialize_actions(relevant_files: RelevantFiles) -> Result<Vec<ProvNode>,
+pub fn serialize_actions(relevant_files: ArchiveContents) -> Result<Vec<ProvNode>,
                                                             serde_yaml::Error> {
     println!("Root UUID is: {}", relevant_files.root_uuid);
 
@@ -191,7 +191,7 @@ pub fn serialize_actions(relevant_files: RelevantFiles) -> Result<Vec<ProvNode>,
 /// as strings.
 /// 
 /// Requires: user pass path to a valid .qza or .qzv with archive version == 5
-pub fn get_relevant_files(fp: &str) -> Result<RelevantFiles, Box<dyn Error>> {
+pub fn get_relevant_files(fp: &str) -> Result<ArchiveContents, Box<dyn Error>> {
     println!("Unzipping {} ", fp);
     // Get a filepath and create a ZipArchive
     let fp = File::open(fp)?;
@@ -217,7 +217,7 @@ pub fn get_relevant_files(fp: &str) -> Result<RelevantFiles, Box<dyn Error>> {
         let filename = top_level_metadata[0].clone();
         let reader = zip.by_name(&filename)?;
         let tmp_md: ActionMetadata = serde_yaml::from_reader(reader)?;
-        rel_files = RelevantFiles::new( &tmp_md.uuid );
+        rel_files = ArchiveContents::new( &tmp_md.uuid );
     } else {
         return Err(Box::new(ioError::new(std::io::ErrorKind::InvalidInput,
                             "Malformed Archive: Multiple top-level metadata.yaml files")));
