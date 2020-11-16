@@ -66,9 +66,8 @@ pub struct ActionMetadata {
     // We'll capture nulls as Strings instead of Option(String)s for simplicity
     format: String,
 }
-
-/// One node of a provenance tree
-#[derive(Debug, Deserialize, Serialize)]
+/// One node of a provenance tree #[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug)]
 pub struct ProvNode {
     metadata: Option<ActionMetadata>,
     action: Option<Action>,
@@ -84,7 +83,7 @@ impl ProvNode {
         let mut citations = None;
         let key_err = "Key Error in ProvNode::new(); Filepath does not exist in RelevantFiles";
         for i in filenames {
-            let content = rel_files.0.get(&i).ok_or_else(|| {key_err});
+            let content = rel_files.file_contents.get(&i).ok_or_else(|| {key_err});
             if i.contains("metadata.yaml") {
                 metadata = serde_yaml::from_str(content.unwrap())?;
             } else if i.contains("action.yaml") {
@@ -100,54 +99,53 @@ impl ProvNode {
 
 /// A HashMap of filename:content pairs
 #[derive(Debug)]
-pub struct RelevantFiles ( HashMap<String, String> );
+pub struct RelevantFiles { root_uuid: String,
+                           file_contents: HashMap<String, String> }
 
 impl RelevantFiles {
     pub fn len(&self) -> usize {
-        self.0.len()
+        self.file_contents.len()
     }
 
-    pub fn new() -> RelevantFiles {
-        let val = HashMap::new();
-        RelevantFiles ( val )
+    pub fn new(root_uuid: &str) -> RelevantFiles {
+        let root_uuid = String::from(root_uuid);
+        let file_contents = HashMap::new();
+        RelevantFiles { root_uuid, file_contents }
     }
 
     pub fn insert(&mut self, filename: String, content: String) {
-        self.0.insert(filename, content);
+        self.file_contents.insert(filename, content);
     }
 }
 
+/// Main run function for the program - primary program logic lives here
 pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
     println!("Now we have a config {:?}", conf);
     println!("Calling unzip on {}", conf.fp);
     let relevant_files = get_relevant_files(&conf.fp)?;    
     let actions = serialize_actions(relevant_files)?;
 
-    // println!("{:?}\n", actions[0].citations);
-    // println!("{:?}\n", actions[0].action);
-    // println!("{:?}\n", actions[0].metadata);
-    // println!("{:?}\n", actions[0].children);
+    println!("{:?}\n", actions[0].citations);
+    println!("{:?}\n", actions[0].action);
+    println!("{:?}\n", actions[0].metadata);
+    println!("{:?}\n", actions[0].children);
     // let tree = build_tree(actions);
 
-    // TODO: Factor data structures and parsing tools out into a separate crate?
-    // TODO: basic tests. Pass a bad path, pass a non-Artifact path, pass relative or 
-    // complete filepaths
-    
     Ok(())
 }
 
 /// Groups related files and parses them into ProvNodes
 /// Returns: A vector of ProvNodes, which can be organized into a tree elsewhere
-pub fn serialize_actions(relevant_files: RelevantFiles) -> Result<Vec<ProvNode>, serde_yaml::Error> {
-    // unpack the HashMap so we can access it here without indirection
-    let RelevantFiles(rel_files) = &relevant_files;
+pub fn serialize_actions(relevant_files: RelevantFiles) -> Result<Vec<ProvNode>,
+                                                            serde_yaml::Error> {
+    println!("Root UUID is: {}", relevant_files.root_uuid);
 
     // use filenames to group metadata, citation, and action files
     // Separate terminal and other actions
     let mut leaf_files = Vec::new();
     let mut other_files = Vec::new();
     
-    for filename in rel_files.keys() {
+    for filename in relevant_files.file_contents.keys() {
         if filename.contains("artifacts"){
             other_files.push(filename.clone());
         } else {
@@ -198,28 +196,28 @@ pub fn get_relevant_files(fp: &str) -> Result<RelevantFiles, Box<dyn Error>> {
     // Get a filepath and create a ZipArchive
     let fp = File::open(fp)?;
     let mut zip = zip::ZipArchive::new(fp)?;
-
+    
     // TODO: filtering these as Paths would allow us to consider the semantics
     // of whole components, rather than using the `/data` hack to exclude data
     // directory items but keep `metadata`
     let top_level_metadata: Vec<String> = zip.file_names()
-        .filter(|name| !name.contains("provenance"))
-        .filter(|name| !name.contains("/data"))
-        .filter(|name| name.contains("metadata.yaml"))
-        .map(|name| {String::from(name)})
-        .collect();
+    .filter(|name| !name.contains("provenance"))
+    .filter(|name| !name.contains("/data"))
+    .filter(|name| name.contains("metadata.yaml"))
+    .map(|name| {String::from(name)})
+    .collect();
     
     for name in &top_level_metadata{
         println!("{}", name);
     };
-
+    
+    let mut rel_files; 
     let n_files_captured = top_level_metadata.len();
     if n_files_captured == 1 {
         let filename = top_level_metadata[0].clone();
         let reader = zip.by_name(&filename)?;
         let tmp_md: ActionMetadata = serde_yaml::from_reader(reader)?;
-        let root_uuid = tmp_md.uuid;
-        println!("{}", root_uuid);
+        rel_files = RelevantFiles::new( &tmp_md.uuid );
     } else {
         return Err(Box::new(ioError::new(std::io::ErrorKind::InvalidInput,
                             "Malformed Archive: Multiple top-level metadata.yaml files")));
@@ -235,7 +233,6 @@ pub fn get_relevant_files(fp: &str) -> Result<RelevantFiles, Box<dyn Error>> {
         .collect();
 
     // Read files into memory, mapping filename to contents
-    let mut rel_files = RelevantFiles::new();
     for i in 0..filenames.len() {
         let mut tmp_contents = String::new();
         zip.by_name(&filenames[i]).unwrap().read_to_string(&mut tmp_contents).unwrap();
