@@ -1,7 +1,10 @@
 // TODO: remove
 // #![allow(warnings)]
 
+// TODO: Can we drop std::error::Error in favor of std::io::Error, and lose the
+// `as ioError`?
 use std::error::Error;
+use std::io::Error as ioError;
 use std::fs::File;
 use std::io::Read;
 use serde::{Deserialize, Serialize};
@@ -125,6 +128,10 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
     // println!("{:?}\n", actions[0].metadata);
     // println!("{:?}\n", actions[0].children);
     // let tree = build_tree(actions);
+
+    // TODO: Factor data structures and parsing tools out into a separate crate?
+    // TODO: basic tests. Pass a bad path, pass a non-Artifact path, pass relative or 
+    // complete filepaths
     
     Ok(())
 }
@@ -148,11 +155,18 @@ pub fn serialize_actions(relevant_files: RelevantFiles) -> Result<Vec<ProvNode>,
         }
     }
 
+    // TODO: Check the QIIME2 archive version, and handle appropriately.
+    // For now, that probably means error if version != 5
+
     // println!("\n\n");
     // for file in &other_files {
     //     println!("{}", file);
     // }
     
+    // TODO: create groups of files by UUID
+    // Create a new ProvNode for each group
+    // push it onto the result vector
+ 
     // Capture terminal action
     let leaf = ProvNode::new(leaf_files, relevant_files)?;
 
@@ -178,17 +192,39 @@ pub fn serialize_actions(relevant_files: RelevantFiles) -> Result<Vec<ProvNode>,
 /// Opens a .qza or .qzv, harvests relevant files and reads them into memory
 /// as strings.
 /// 
-/// Requires: a valid .qza or .qzv with archive version == 5
-/// Returns: RelevantFiles, a vec<NamedFile>
+/// Requires: user pass path to a valid .qza or .qzv with archive version == 5
 pub fn get_relevant_files(fp: &str) -> Result<RelevantFiles, Box<dyn Error>> {
     println!("Unzipping {} ", fp);
     // Get a filepath and create a ZipArchive
     let fp = File::open(fp)?;
     let mut zip = zip::ZipArchive::new(fp)?;
-    
-    // TODO: Check the QIIME2 archive version, and handle appropriately.
-    // For now, that probably means error if version != 5
 
+    // TODO: filtering these as Paths would allow us to consider the semantics
+    // of whole components, rather than using the `/data` hack to exclude data
+    // directory items but keep `metadata`
+    let top_level_metadata: Vec<String> = zip.file_names()
+        .filter(|name| !name.contains("provenance"))
+        .filter(|name| !name.contains("/data"))
+        .filter(|name| name.contains("metadata.yaml"))
+        .map(|name| {String::from(name)})
+        .collect();
+    
+    for name in &top_level_metadata{
+        println!("{}", name);
+    };
+
+    let n_files_captured = top_level_metadata.len();
+    if n_files_captured == 1 {
+        let filename = top_level_metadata[0].clone();
+        let reader = zip.by_name(&filename)?;
+        let tmp_md: ActionMetadata = serde_yaml::from_reader(reader)?;
+        let root_uuid = tmp_md.uuid;
+        println!("{}", root_uuid);
+    } else {
+        return Err(Box::new(ioError::new(std::io::ErrorKind::InvalidInput,
+                            "Malformed Archive: Multiple top-level metadata.yaml files")));
+    }
+    
     // Create a positive mask for relevant files
     let filenames: Vec<String> = zip.file_names()
         .filter(|name| name.contains("provenance") 
