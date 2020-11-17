@@ -70,12 +70,13 @@ impl ArchiveContents {
 }
 
 /// One node of a provenance tree
+/// NOTE: citations temporarily removed for readability/presentation purposes
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProvNode {
     pub uuid: Option<String>,
     pub metadata: Option<ActionMetadata>,
     pub action: Option<Action>,
-    pub citations: Option<String>,
+    // pub citations: Option<String>,
     pub parents: Option<Vec<ProvNode>>,
 }
 
@@ -84,7 +85,7 @@ impl ProvNode {
             -> Result<ProvNode, serde_yaml::Error> {
         let mut metadata: Option<ActionMetadata> = None;
         let mut action: Option<Action> = None;
-        let mut citations = None;
+        // let mut citations = None;
         let key_err = "Key Error in ProvNode::new(); Filepath does not exist in ArchiveContents";
         for i in filenames {
             let content = rel_files.file_contents.get(&i).ok_or_else(|| {key_err});
@@ -92,14 +93,16 @@ impl ProvNode {
                 metadata = serde_yaml::from_str(content.unwrap())?;
             } else if i.contains("action.yaml") {
                 action = serde_yaml::from_str(content.unwrap())?;
-            } else if i.contains("citations.bib") {
-                citations = Some(String::from(content.unwrap()));
-            }
+            } 
+            // else if i.contains("citations.bib") {
+            //     citations = Some(String::from(content.unwrap()));
+            // }
         }
 
         let uuid = Some(metadata.as_ref().unwrap().uuid.clone());
 
-        Ok(ProvNode { uuid, metadata, action, citations, parents: None })
+        // Ok(ProvNode { uuid, metadata, action, citations, parents: None })
+        Ok(ProvNode { uuid, metadata, action, parents: None })
     }
 }
 
@@ -118,10 +121,15 @@ pub fn build_tree(actions: &Vec<ProvNode>) -> Result<&ProvNode, Box<dyn Error>> 
             }
             // Look up UUID in actions and add ProvNode to tree
             println!("{:?}", uuids);
+            let filtered_nodes: Vec<&ProvNode> = actions.iter().
+                filter(|action| uuids.contains(&action.uuid.as_ref().unwrap()))
+                .collect();
+            println!("{:?}", filtered_nodes);
         } else {
             println!("None");
             // None in inputs field indicates no parents: no action to take
         }
+        println!();
     }
 
     // Do this iteratively for each node, not recursively.
