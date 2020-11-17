@@ -46,13 +46,13 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
         // println!("{:?}", actions[i].uuid);
         // println!("{:?}\n", actions[i].citations);
         // TODO: Use these breadcrumbs to build a tree
-        let p1 = actions[i].action.as_ref().unwrap().action.inputs.as_ref();
-        println!("{:?}", p1);
+        // let p1 = actions[i].action.as_ref().unwrap().action.inputs.as_ref();
+        // println!("{:?}", p1);
         // println!("{:?}\n", actions[i].metadata);
         // println!("{:?}\n", actions[i].children);
         // println!("");
     }
-    let tree = build_tree(&actions);
+    let tree = build_tree(&actions)?;
     // println!("A horrible tree: {:?}", tree);
     
     Ok(())

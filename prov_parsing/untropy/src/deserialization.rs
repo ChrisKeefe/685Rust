@@ -26,6 +26,7 @@ pub struct ActionDetails {
     pub semantic_type: String,
     pub plugin: Option<String>,
     pub action: Option<String>,
+    // TODO: Make this a tuple?
     pub inputs: Option<Vec<HashMap<SemanticType, UUID>>>,
     pub parameters: Option<serde_yaml::Value>,
     #[serde(rename="output-name")]
@@ -104,22 +105,28 @@ impl ProvNode {
 
 /// Takes in an unordered list of Nodes, and links them through "parent" refs
 /// Returns the root node of the Provenance Tree
-pub fn build_tree(actions: &Vec<ProvNode>) -> &ProvNode {
+pub fn build_tree(actions: &Vec<ProvNode>) -> Result<&ProvNode, Box<dyn Error>> {
     // TODO: Get Input UUIDs from root node, and add them as parents
     for action in actions {
-        // let parents = match action.action.as_ref().unwrap().action.inputs {
-        //     None => None,
-        //     Some(Sequence([Mapping{map}])) => {
-        //         println!("{:?}", map);
-        //         Some(map)
-        //     },
-        //     _ => None
-        // };
+        // Get Vec of "parent" artifact Hashmaps
+        if let Some(parents) = &action.action.as_ref().unwrap().action.inputs {
+            let mut uuids: Vec<UUID> = Vec::new();
+            // get uuids for all parents
+            // Hack: all parents are single-pair HashMaps for now b/c Serde
+            for i in 0..parents.len(){
+                uuids.push(parents[i].values().next().unwrap().to_string().clone());
+            }
+            // Look up UUID in actions and add ProvNode to tree
+            println!("{:?}", uuids);
+        } else {
+            println!("None");
+            // None in inputs field indicates no parents: no action to take
+        }
     }
 
     // Do this iteratively for each node, not recursively.
     // Return the root node of the tree. This may require modifying ownership.
-    &actions[0]
+    Ok(&actions[0])
 }
 
 /// Opens a .qza or .qzv, harvests relevant files and reads them into memory
