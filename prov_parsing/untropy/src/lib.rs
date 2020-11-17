@@ -9,7 +9,7 @@ use std::fs::File;
 use std::io::Read;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::{PathBuf};
 
 /// A Config struct to store command line arguments
 #[derive(Debug)]
@@ -43,12 +43,12 @@ pub struct Action {
 pub struct ActionDetails {
     #[serde(rename="type")]
     semantic_type: String,
-    plugin: String,
-    action: String,
-    inputs: serde_yaml::Value,
-    parameters: serde_yaml::Value,
+    plugin: Option<String>,
+    action: Option<String>,
+    inputs: Option<serde_yaml::Value>,
+    parameters: Option<serde_yaml::Value>,
     #[serde(rename="output-name")]
-    output_name: String,
+    output_name: Option<String>,
     // TODO: what even is alias-of?
     // #[serde(rename="alias-of")]
     // alias_of: String,
@@ -127,12 +127,16 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
     let relevant_files = get_relevant_files(&conf.fp)?;    
     let actions = serialize_actions(relevant_files)?;
 
-    // println!("{:?}", actions[0].uuid);
-    // println!("{:?}\n", actions[0].citations);
-    // println!("{:?}\n", actions[0].action);
-    // println!("{:?}\n", actions[0].metadata);
-    // println!("{:?}\n", actions[0].children);
-    // println!("");
+    for i in 0..actions.len(){
+        // println!("{:?}", actions[i].uuid);
+        // println!("{:?}\n", actions[i].citations);
+        
+        // TODO: Use these breadcrumbs to build a tree
+        println!("{:?}\n", actions[i].action.as_ref().unwrap().action.inputs);
+        // println!("{:?}\n", actions[i].metadata);
+        // println!("{:?}\n", actions[i].children);
+        println!("");
+    }
     // let tree = build_tree(actions);
     
     Ok(())
@@ -164,12 +168,6 @@ Box<dyn Error>> {
         .map(|fp| PathBuf::from(fp))
         .collect();
 
-        // TODO: remove
-        // println!("\n\n");
-        // for file in &other_filenames {
-            //     println!("{}", file);
-            // }
-            
     // We'll group files by action, by sorting their paths. We'll building a
     // node for the previous group whenever the UUID changes
     other_filenames.sort();
@@ -181,7 +179,6 @@ Box<dyn Error>> {
     let mut result: Vec<ProvNode> = Vec::new();
 
     for filename in &other_filenames {
-        println!();
         let this_path = PathBuf::from(filename);
         let suffix = this_path.strip_prefix(&path_prefix)?;
         let path_components: Vec<_> = (&suffix).components()
@@ -190,28 +187,19 @@ Box<dyn Error>> {
         let action_uuid = &PathBuf::from(path_components[0]);
         
         // Create a new ProvNode for each UUID
-        // TODO: remove
-        // println!("Current id: {:?}", action_uuid);
-        // println!("Prev id: {:?}", &prev_id);
         if action_uuid != &prev_id{
             // Make a ProvNode out of the previous bunch of files...
-            // TODO: remove
-            println!("files for one action: {:?}", files_for_one_action);
             let node = ProvNode::new(files_for_one_action.iter()
                 .map(|file| String::from(file.to_str().unwrap()))
                 .collect()
                 , &relevant_files)?;
             result.push(node);
-            // TODO: remove
-            // println!("\n\nNodes: {:?}\n", result.len());
                                      
             // ...then create a new vector to hold the next bunch
             prev_id = PathBuf::from(action_uuid);
             files_for_one_action = Vec::new();
         }
         files_for_one_action.push(PathBuf::from(filename));
-        // TODO: remove
-        // println!("Files for one action after reset: {:?}", files_for_one_action);
     }
     
     // Create one final ProvNode from the last bunch of files
@@ -224,7 +212,6 @@ Box<dyn Error>> {
 
     Ok(result)
 }
-
 
 // pub fn build_tree(actions: Vec<Action>) -> ProvNode {
 //     // TODO: implement;
