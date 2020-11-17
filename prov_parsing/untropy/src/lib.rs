@@ -9,7 +9,7 @@ use std::fs::File;
 use std::io::Read;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-// use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// A Config struct to store command line arguments
 #[derive(Debug)]
@@ -98,7 +98,7 @@ pub struct ProvNode {
 }
 
 impl ProvNode {
-    pub fn new(filenames: Vec<String>, rel_files: ArchiveContents) 
+    pub fn new(filenames: Vec<String>, rel_files: &ArchiveContents) 
             -> Result<ProvNode, serde_yaml::Error> {
         let mut metadata: Option<ActionMetadata> = None;
         let mut action: Option<Action> = None;
@@ -127,20 +127,24 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
     let relevant_files = get_relevant_files(&conf.fp)?;    
     let actions = serialize_actions(relevant_files)?;
 
-    println!("{:?}", actions[0].uuid);
-    println!("{:?}\n", actions[0].citations);
-    println!("{:?}\n", actions[0].action);
-    println!("{:?}\n", actions[0].metadata);
-    println!("{:?}\n", actions[0].children);
+    // println!("{:?}", actions[0].uuid);
+    // println!("{:?}\n", actions[0].citations);
+    // println!("{:?}\n", actions[0].action);
+    // println!("{:?}\n", actions[0].metadata);
+    // println!("{:?}\n", actions[0].children);
+    // println!("");
     // let tree = build_tree(actions);
-
+    
     Ok(())
 }
 
 /// Groups related files by Action UUID and parses them into ProvNodes
 /// Returns: A vector of ProvNodes, which can be organized into a tree elsewhere
 pub fn serialize_actions(relevant_files: ArchiveContents) -> Result<Vec<ProvNode>,
-                                                            serde_yaml::Error> {
+Box<dyn Error>> {
+    // TODO: Check the QIIME2 archive version, and handle appropriately.
+    // For now, that probably means error if version != 5
+
     // use filenames to group metadata, citation, and action files into
     // terminal action (our archive root/analysis leaf) and other actions
     let mut leaf_filenames = Vec::new();
@@ -153,31 +157,71 @@ pub fn serialize_actions(relevant_files: ArchiveContents) -> Result<Vec<ProvNode
             leaf_filenames.push(filename.clone());
         }
     }
-
-    // TODO: Check the QIIME2 archive version, and handle appropriately.
-    // For now, that probably means error if version != 5
-
-    // println!("\n\n");
-    // for file in &other_files {
-    //     println!("{}", file);
-    // }
     
-    // TODO: create groups of files by UUID
-    // Create a new ProvNode for each group
-    // push it onto the result vector
- 
-    // Capture terminal action
-    let leaf = ProvNode::new(leaf_filenames, relevant_files)?;
+    // Filepaths for terminal actions are ready to be read into a node
+    let mut prev_id:PathBuf  = PathBuf::from(&relevant_files.root_uuid);
+    let mut files_for_one_action: Vec<PathBuf> = leaf_filenames.iter()
+        .map(|fp| PathBuf::from(fp))
+        .collect();
 
-    // // Turn a string into an owned PathBuf
-    // println!("{}", PathBuf::from(&files.filenames[0]).display());
-    // let mut filenames = files.filenames.iter();
-    // let filenames = filenames.map(|fp| PathBuf::from(fp));
-    // we can zip iterators with itertools.izip
+        // TODO: remove
+        // println!("\n\n");
+        // for file in &other_filenames {
+            //     println!("{}", file);
+            // }
+            
+    // We'll group files by action, by sorting their paths. We'll building a
+    // node for the previous group whenever the UUID changes
+    other_filenames.sort();
+
+    let path_prefix = PathBuf::from(&relevant_files.root_uuid)
+        .join("provenance")
+        .join("artifacts");
     
-    // serialize each and pack them in ProvNodes
+    let mut result: Vec<ProvNode> = Vec::new();
+
+    for filename in &other_filenames {
+        println!();
+        let this_path = PathBuf::from(filename);
+        let suffix = this_path.strip_prefix(&path_prefix)?;
+        let path_components: Vec<_> = (&suffix).components()
+            .map(|comp| comp.as_os_str())
+            .collect();        
+        let action_uuid = &PathBuf::from(path_components[0]);
+        
+        // Create a new ProvNode for each UUID
+        // TODO: remove
+        // println!("Current id: {:?}", action_uuid);
+        // println!("Prev id: {:?}", &prev_id);
+        if action_uuid != &prev_id{
+            // Make a ProvNode out of the previous bunch of files...
+            // TODO: remove
+            println!("files for one action: {:?}", files_for_one_action);
+            let node = ProvNode::new(files_for_one_action.iter()
+                .map(|file| String::from(file.to_str().unwrap()))
+                .collect()
+                , &relevant_files)?;
+            result.push(node);
+            // TODO: remove
+            // println!("\n\nNodes: {:?}\n", result.len());
+                                     
+            // ...then create a new vector to hold the next bunch
+            prev_id = PathBuf::from(action_uuid);
+            files_for_one_action = Vec::new();
+        }
+        files_for_one_action.push(PathBuf::from(filename));
+        // TODO: remove
+        // println!("Files for one action after reset: {:?}", files_for_one_action);
+    }
     
-    let result = vec!(leaf);
+    // Create one final ProvNode from the last bunch of files
+    let node = ProvNode::new(files_for_one_action.iter()
+        .map(|file| String::from(file.to_str().unwrap()))
+        .collect()
+        , &relevant_files)?;
+
+    result.push(node);
+
     Ok(result)
 }
 
@@ -207,9 +251,9 @@ pub fn get_relevant_files(fp: &str) -> Result<ArchiveContents, Box<dyn Error>> {
     .map(|name| {String::from(name)})
     .collect();
     
-    for name in &top_level_metadata{
-        println!("{}", name);
-    };
+    // for name in &top_level_metadata{
+    //     println!("{}", name);
+    // };
     
     let mut rel_files; 
     let n_files_captured = top_level_metadata.len();
