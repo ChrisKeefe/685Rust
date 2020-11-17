@@ -2,9 +2,11 @@
 
 ## Short-term
 
+- build a tree
+- Write data to yaml file
+- Handle struct API better, so everything doesn't need to be public
 - Factor clone out of Config constructor for performance? (book Ch13)
 - Remove .unwrap() calls, and improve error handling
-- Factor data structures and parsing tools out into a separate crate?
 - Basic tests. Pass a bad path, pass a non-Artifact path, pass relative or
 complete filepaths
 
