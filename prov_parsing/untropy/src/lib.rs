@@ -137,7 +137,8 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
         // println!("{:?}\n", actions[i].children);
         println!("");
     }
-    // let tree = build_tree(actions);
+    let tree = build_tree(&actions);
+    println!("A horrible tree: {:?}", tree);
     
     Ok(())
 }
@@ -213,11 +214,14 @@ Box<dyn Error>> {
     Ok(result)
 }
 
-// pub fn build_tree(actions: Vec<Action>) -> ProvNode {
-//     // TODO: implement;
-//     let result = ProvNode::new();
-//     result
-// }
+pub fn build_tree(actions: &Vec<ProvNode>) -> &ProvNode {
+    // TODO: Confirm actions[0] is the root node
+    // TODO: change ProvNode field from `children` to `parents`
+    // TODO: Get Input UUIDs from root node, and add them as parents
+    // Do this iteratively for each node, not recursively.
+    // Return the root node of the tree. This may require modifying ownership.
+    &actions[0]
+}
 
 /// Opens a .qza or .qzv, harvests relevant files and reads them into memory
 /// as strings.
