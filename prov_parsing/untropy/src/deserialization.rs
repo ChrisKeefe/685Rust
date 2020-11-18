@@ -122,7 +122,6 @@ pub fn build_tree(actions: &mut Vec<ProvNode>) -> Result<&ProvNode, Box<dyn Erro
                 .collect();
 
             actions[i].parents = Some(relevant_nodes);            
-
         }
     }
 

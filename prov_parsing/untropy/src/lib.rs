@@ -40,12 +40,12 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
     for i in 0..actions.len(){
         println!("{:?}", actions[i].uuid);
         // println!("{:?}\n", actions[i].metadata);
-        // println!("{:?}\n", actions[i].children);
+        println!("{:?}\n", actions[i].parents);
         println!("");
     }
 
     let tree = build_tree(&mut actions)?;
-    println!("A horrible tree: {:#?}", tree);
+    // println!("A horrible tree: {:#?}", tree);
     
     Ok(())
 }
