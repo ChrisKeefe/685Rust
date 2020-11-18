@@ -28,6 +28,8 @@ What it doesn't do
     - handle different archive formats
     - testing
     - "style" - lots of clone and unwrap
+    - semantic types
+    - any kind of validation - UUID, citations, whatever.
 
 Lots of hackery.
 

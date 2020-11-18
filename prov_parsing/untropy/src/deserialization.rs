@@ -11,7 +11,7 @@ type UUID = String;
 type SemanticType = String;
 
 /// Select contents of an action.yaml file
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Action {
     pub action: ActionDetails,
     // No need to capture the details in Execution or Environment objects for now
@@ -19,7 +19,7 @@ pub struct Action {
 }
 
 /// Data from the action tag in an action.yaml
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ActionDetails {
     #[serde(rename="type")]
     pub semantic_type: String,
@@ -37,7 +37,7 @@ pub struct ActionDetails {
 }
 
 /// Contents of a metadata.yaml file
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ActionMetadata {
     pub uuid: String,
     #[serde(rename="type")]
@@ -70,7 +70,7 @@ impl ArchiveContents {
 
 /// One node of a provenance tree
 /// NOTE: citations temporarily removed for readability/presentation purposes
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ProvNode {
     pub uuid: Option<String>,
     pub metadata: Option<ActionMetadata>,
@@ -96,7 +96,7 @@ impl ProvNode {
             // else if i.contains("citations.bib") {
             //     citations = Some(String::from(content.unwrap()));
             // }
-        }
+        }   
 
         let uuid = Some(metadata.as_ref().unwrap().uuid.clone());
 
@@ -108,28 +108,40 @@ impl ProvNode {
 /// Takes in an unordered list of Nodes, and links them through "parent" refs
 /// Returns the root node of the Provenance Tree
 pub fn build_tree(actions: &Vec<ProvNode>) -> Result<&ProvNode, Box<dyn Error>> {
-    // TODO: Get Input UUIDs from root node, and add them as parents
-    for action in actions {
-        // Get Vec of "parent" artifact Hashmaps
-        if let Some(parents) = &action.action.as_ref().unwrap().action.inputs {
+    let mut parents_per_action: Vec<Option<Vec<ProvNode>>> = Vec::new();
+
+    // Get Input UUIDs from root node, and add them as parent
+    for i in 0..actions.len() {
+        // Get "parent artifact" Hashmaps
+        if let Some(parents) = &actions[i].action.as_ref().unwrap().action.inputs {
             let mut uuids: Vec<UUID> = Vec::new();
-            // get uuids for all parents
-            // Hack: all parents are single-pair HashMaps for now b/c Serde
+            // This action has Some parents - get their UUIDs
+            // TODO: refactor as iterator?
             for i in 0..parents.len(){
                 uuids.push(parents[i].values().next().unwrap().to_string().clone());
             }
-            // Look up UUID in actions and add ProvNode to tree
+            // Look up these UUIDs and add the matching ProvNode to tree
             println!("{:?}", uuids);
-            let filtered_nodes: Vec<&ProvNode> = actions.iter().
+            let filtered_nodes: Vec<ProvNode> = actions.iter().
                 filter(|action| uuids.contains(&action.uuid.as_ref().unwrap()))
+                .map(|action| action.to_owned())
                 .collect();
+
             println!("{:?}", filtered_nodes);
+
+            // We can't mutate our Vec while we iterate over it. Use a separate Vec
+            parents_per_action.push(Some(filtered_nodes));
+
         } else {
-            println!("None");
             // None in inputs field indicates no parents: no action to take
+            // We must store a none to keep our indices aligned
+            parents_per_action.push(None);
+            println!("None");
         }
         println!();
     }
+    
+    // Glue nodes_per_action into actions.parents fields
 
     // Do this iteratively for each node, not recursively.
     // Return the root node of the tree. This may require modifying ownership.
