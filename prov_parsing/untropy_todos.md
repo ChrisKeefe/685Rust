@@ -40,6 +40,7 @@ Serde:
 - You build the structs, SerDe fills em up.
 - Serde brings its own useful types (Value can represent any serial structure)
 - Serde recognizes your types, including Type Aliases (`type UUID = String;`)
+- Don't want parts of the input? Just don't put them in the struct.
 - Keyword Aliasing - saves your butt if your serial data structure uses Rust keywords for keys
 
 What we've achieved here
