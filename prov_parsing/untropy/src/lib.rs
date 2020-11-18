@@ -26,7 +26,7 @@ impl Config {
 
 /// Main run function for the program - primary program logic lives here
 pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
-    let relevant_files = get_relevant_files(&conf.fp)?;    
+    let relevant_files = get_relevant_files(&conf.fp)?;
     let root_id = &relevant_files.root_uuid.clone();
     let mut actions = serialize_actions(relevant_files)?;
 
@@ -40,12 +40,12 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
     for i in 0..actions.len(){
         println!("{:?}", actions[i].uuid);
         // println!("{:?}\n", actions[i].metadata);
-        println!("{:?}\n", actions[i].parents);
-        println!("");
+        // println!("{:?}\n", actions[i].parents);
+        // println!("");
     }
 
     let tree = build_tree(&mut actions)?;
-    // println!("A horrible tree: {:#?}", tree);
+    println!("\n\nA horrible tree: {:#?}", tree);
     
     Ok(())
 }

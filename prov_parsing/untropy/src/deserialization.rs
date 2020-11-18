@@ -49,8 +49,10 @@ pub struct ActionMetadata {
 /// Contents of a QIIME 2 Archive, including Archive UUID and a HashMap of
 /// filename: content pairs
 #[derive(Debug)]
-pub struct ArchiveContents { pub root_uuid: String,
-                             pub file_contents: HashMap<String, String> }
+pub struct ArchiveContents {
+    pub root_uuid: String,
+    pub file_contents: HashMap<String, String>
+}
 
 impl ArchiveContents {
     pub fn new(root_uuid: &str) -> ArchiveContents {
