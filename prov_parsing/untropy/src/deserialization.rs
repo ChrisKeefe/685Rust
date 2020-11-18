@@ -107,8 +107,7 @@ impl ProvNode {
 
 /// Takes in an unordered list of Nodes, and links them through "parent" refs
 /// Returns the root node of the Provenance Tree
-pub fn build_tree(actions: &Vec<ProvNode>) -> Result<&ProvNode, Box<dyn Error>> {
-    let mut parents_per_action: Vec<Option<Vec<ProvNode>>> = Vec::new();
+pub fn build_tree(actions: &mut Vec<ProvNode>) -> Result<&ProvNode, Box<dyn Error>> {
 
     // Get Input UUIDs from root node, and add them as parent
     for i in 0..actions.len() {
@@ -129,21 +128,15 @@ pub fn build_tree(actions: &Vec<ProvNode>) -> Result<&ProvNode, Box<dyn Error>> 
 
             println!("{:?}", filtered_nodes);
 
-            // We can't mutate our Vec while we iterate over it. Use a separate Vec
-            parents_per_action.push(Some(filtered_nodes));
+            actions[i].parents = Some(filtered_nodes);            
 
         } else {
             // None in inputs field indicates no parents: no action to take
-            // We must store a none to keep our indices aligned
-            parents_per_action.push(None);
             println!("None");
         }
         println!();
     }
-    
-    // Glue nodes_per_action into actions.parents fields
 
-    // Do this iteratively for each node, not recursively.
     // Return the root node of the tree. This may require modifying ownership.
     Ok(&actions[0])
 }

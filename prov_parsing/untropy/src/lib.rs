@@ -4,7 +4,6 @@ use std::error::Error;
 use std::io::Error as ioError;
 mod deserialization;
 use deserialization::{build_tree, get_relevant_files, serialize_actions};
-use serde_yaml::{Sequence, Mapping};
 
 /// A Config struct to store command line arguments
 #[derive(Debug)]
@@ -29,7 +28,7 @@ impl Config {
 pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
     let relevant_files = get_relevant_files(&conf.fp)?;    
     let root_id = &relevant_files.root_uuid.clone();
-    let actions = serialize_actions(relevant_files)?;
+    let mut actions = serialize_actions(relevant_files)?;
 
     // TODO: make this a test instead
     // Confirm actions[0] is the root node.
@@ -52,7 +51,7 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
         // println!("{:?}\n", actions[i].children);
         // println!("");
     }
-    let tree = build_tree(&actions)?;
+    let tree = build_tree(&mut actions)?;
     // println!("A horrible tree: {:?}", tree);
     
     Ok(())

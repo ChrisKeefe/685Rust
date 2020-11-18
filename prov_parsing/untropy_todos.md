@@ -49,6 +49,10 @@ What we've achieved here
 
 What remains for this MVP
 
+Novelties:
+If `to_owned()` or `clone()` silently fail to do anything, it's probably because
+you haven't derived `Clone`. TAKE SCREENCAPS FROM build_tree
+
 Remaining questions
 
 How this might be useful:
