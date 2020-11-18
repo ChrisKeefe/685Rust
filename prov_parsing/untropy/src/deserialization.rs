@@ -53,10 +53,6 @@ pub struct ArchiveContents { pub root_uuid: String,
                              pub file_contents: HashMap<String, String> }
 
 impl ArchiveContents {
-    pub fn len(&self) -> usize {
-        self.file_contents.len()
-    }
-
     pub fn new(root_uuid: &str) -> ArchiveContents {
         let root_uuid = String::from(root_uuid);
         let file_contents = HashMap::new();
@@ -108,36 +104,29 @@ impl ProvNode {
 /// Takes in an unordered list of Nodes, and links them through "parent" refs
 /// Returns the root node of the Provenance Tree
 pub fn build_tree(actions: &mut Vec<ProvNode>) -> Result<&ProvNode, Box<dyn Error>> {
-
     // Get Input UUIDs from root node, and add them as parent
     for i in 0..actions.len() {
         // Get "parent artifact" Hashmaps
         if let Some(parents) = &actions[i].action.as_ref().unwrap().action.inputs {
-            let mut uuids: Vec<UUID> = Vec::new();
             // This action has Some parents - get their UUIDs
-            // TODO: refactor as iterator?
-            for i in 0..parents.len(){
-                uuids.push(parents[i].values().next().unwrap().to_string().clone());
-            }
+            let uuids: Vec<UUID> = parents.iter()
+                .map(|parent| parent.values().next().unwrap().to_string().clone())
+                .collect::<Vec<UUID>>();
+            
             // Look up these UUIDs and add the matching ProvNode to tree
-            println!("{:?}", uuids);
-            let filtered_nodes: Vec<ProvNode> = actions.iter().
+            // TODO: Remove
+            // println!("{:?}", uuids);
+            let relevant_nodes: Vec<ProvNode> = actions.iter().
                 filter(|action| uuids.contains(&action.uuid.as_ref().unwrap()))
                 .map(|action| action.to_owned())
                 .collect();
 
-            println!("{:?}", filtered_nodes);
+            actions[i].parents = Some(relevant_nodes);            
 
-            actions[i].parents = Some(filtered_nodes);            
-
-        } else {
-            // None in inputs field indicates no parents: no action to take
-            println!("None");
         }
-        println!();
     }
 
-    // Return the root node of the tree. This may require modifying ownership.
+    // Return the root node of the tree.
     Ok(&actions[0])
 }
 

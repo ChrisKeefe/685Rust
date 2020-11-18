@@ -37,22 +37,15 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
             "serialize_actions error: returns non-root id at idx 0.")));
     }
 
-    // let i = 0;
-    // let p1 = actions[i].action.as_ref().unwrap().action.inputs.as_ref();
-    // println!("{:?}\n", p1);
-
     for i in 0..actions.len(){
-        // println!("{:?}", actions[i].uuid);
-        // println!("{:?}\n", actions[i].citations);
-        // TODO: Use these breadcrumbs to build a tree
-        // let p1 = actions[i].action.as_ref().unwrap().action.inputs.as_ref();
-        // println!("{:?}", p1);
+        println!("{:?}", actions[i].uuid);
         // println!("{:?}\n", actions[i].metadata);
         // println!("{:?}\n", actions[i].children);
-        // println!("");
+        println!("");
     }
+
     let tree = build_tree(&mut actions)?;
-    // println!("A horrible tree: {:?}", tree);
+    println!("A horrible tree: {:#?}", tree);
     
     Ok(())
 }
