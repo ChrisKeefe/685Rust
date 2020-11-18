@@ -46,11 +46,9 @@ Top-level folder
 
 ## Questions
 
-Is there ever any difference between the top-level metadata.yaml and VERSION files, and the metadata.yaml and VERSION files stored in the top level of provenance?
-
 Citations must be handled as a set to reduce duplication. Are we trusting bibtex keys to do this, or parsing data from the bibtex records themselves?
 
-Similarly, if we want to restrict "replay" to 
+Similarly, if we want to restrict "replay" to
 
 How do we handle parameters that require user interaction, like rarefaction depth? Assume the scripts will be run with user intervention?
 
