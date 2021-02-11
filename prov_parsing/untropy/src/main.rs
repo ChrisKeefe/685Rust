@@ -4,8 +4,7 @@ use untropy::Config;
 
 // TODO: why do the two blocks in main use two different error reporting strategies?
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    let config = Config::new(&args).unwrap_or_else(|err| {
+    let config = Config::new(env::args()).unwrap_or_else(|err| {
         println!("Invalid arguments: {}", err);
         process::exit(1);
     });

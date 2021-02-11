@@ -5,7 +5,7 @@
 - build a tree
 - Write data to yaml file
 - Handle struct API better, so everything doesn't need to be public
-- Factor .clone() of Config constructor for performance? (book Ch13)
+- Remove .clone() calls where possible (book Ch13)
 - Remove .unwrap() calls, and improve error handling
 - Basic tests. Pass a bad path, pass a non-Artifact path, pass relative or
 complete filepaths

@@ -1,6 +1,7 @@
 // TODO: Can we drop std::error::Error in favor of std::io::Error, and lose the
 // `as ioError`?
 // NOTE: std::err::Error is a Trait, std::io::Error is a Type used for io errors
+use std::env;
 use std::error::Error;
 use std::io::Error as ioError;
 mod deserialization;
@@ -18,13 +19,16 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(args: &[String]) -> Result<Config, &'static str> {
-        // For now, we'll take in one fp only, Later, a Vec<String>
-        if args.len() != 2 {
-            return Err("Please provide exactly one fp argument");
-        }
+    pub fn new(mut args: env::Args) -> Result<Config, &'static str> {
+        // ignore program name (CLI args[0])
+        args.next();
 
-        let fp = args[1].clone();
+        // extract filepath argument
+        let fp = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Please provide exactly one filepath argument"),
+        };
+
         Ok(Config { fp })
     }
 }
