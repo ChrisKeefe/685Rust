@@ -48,6 +48,10 @@ pub struct ActionMetadata {
 
 /// Contents of a QIIME 2 Archive, including Archive UUID and a HashMap of
 /// filename: content pairs
+// TODO: root_uuid should be a UUID type
+// TODO: there may be a conflict in what data is actually being stored as keys.
+// It looks like we store UUID of root as key to its file_contents,
+// but we use 
 #[derive(Debug)]
 pub struct ArchiveContents {
     pub root_uuid: String,
@@ -178,11 +182,14 @@ pub fn get_relevant_files(fp: &str) -> Result<ArchiveContents, Box<dyn Error>> {
         rel_files.insert(filenames[i].clone(), tmp_contents);
     }
 
+    println!("{:?}", rel_files);
+
     Ok( rel_files )
 }
 
 /// Groups related files by Action UUID and parses them into ProvNodes
 /// Returns: A vector of ProvNodes, which can be organized into a tree elsewhere
+// TODO: This should be deserialize_actions
 pub fn serialize_actions(relevant_files: ArchiveContents) -> Result<Vec<ProvNode>,
 Box<dyn Error>> {
     // TODO: Check the QIIME2 archive version, and handle appropriately.

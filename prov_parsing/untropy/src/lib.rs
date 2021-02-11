@@ -1,11 +1,16 @@
 // TODO: Can we drop std::error::Error in favor of std::io::Error, and lose the
 // `as ioError`?
+// NOTE: std::err::Error is a Trait, std::io::Error is a Type used for io errors
 use std::error::Error;
 use std::io::Error as ioError;
 mod deserialization;
 use deserialization::{build_tree, get_relevant_files, serialize_actions};
 
 /// A Config struct to store command line arguments
+/// NOTE: For simplicity, this should probably be a single filepath per analysis
+/// If we allow users to pass multiple filepaths per analysis, determining how
+/// to group them will be gross. 
+/// TODO: Will "how do we handle CLI args?" be moot when we're exposing a WASM API?
 #[derive(Debug)]
 pub struct Config {
 /// Not a Path b/c we don't need anything special from the root filepath.
@@ -24,7 +29,7 @@ impl Config {
     }
 }
 
-/// Main run function for the program - primary program logic lives here
+/// Main program logic
 pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
     let relevant_files = get_relevant_files(&conf.fp)?;
     let root_id = &relevant_files.root_uuid.clone();
@@ -38,14 +43,14 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
     }
 
     for i in 0..actions.len(){
-        println!("{:?}", actions[i].uuid);
-        // println!("{:?}\n", actions[i].metadata);
-        // println!("{:?}\n", actions[i].parents);
-        // println!("");
+        // println!("{:?}", actions[i].uuid);
+        // println!("{:?}", actions[i].metadata);
+        // println!("{:?}", actions[i].parents);
+        println!("");
     }
 
     let tree = build_tree(&mut actions)?;
-    println!("\n\nA horrible tree: {:#?}", tree);
+    // println!("\n\nA horrible tree: {:#?}", tree);
     
     Ok(())
 }
