@@ -50,7 +50,7 @@ pub fn run(conf: Config) -> Result<(), Box<dyn Error>> {
         // println!("{:?}", actions[i].uuid);
         // println!("{:?}", actions[i].metadata);
         // println!("{:?}", actions[i].parents);
-        println!("");
+        // println!("");
     }
 
     let tree = build_tree(&mut actions)?;
