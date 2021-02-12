@@ -149,28 +149,33 @@ pub fn get_relevant_files(fp: &str) -> Result<ArchiveContents, Box<dyn Error>> {
     // TODO: filtering these as Paths would allow us to consider the semantics
     // of path components, rather than using the `/data` hack to exclude data
     // directory items but keep `metadata`
-    let top_level_metadata_fp: Vec<String> = zip.file_names()
+    let mut top_level_metadata_fps = zip.file_names()
     .filter(|name| !name.contains("provenance"))
     .filter(|name| !name.contains("/data"))
     .filter(|name| name.contains("metadata.yaml"))
-    .map(|name| {String::from(name)})
-    .collect();
-    
+    .map(|name| {String::from(name)});
+
     // TODO: Remove collect() and handle these as an iterator
     // Creates a new ArchiveContents from the ActionMetadata.UUID of our Archive root
     // there should always be _one_ Archive Root metadata.yaml (at least in V5)
     // Here, the ArchiveContents gets the root_uuid of our Archive Root
     // The HashMap of {filename?/UUID? : file_contents} pairs gets populated below
     let mut rel_files; 
-    let n_files_captured = top_level_metadata_fp.len();
-    if n_files_captured == 1 {
-        let filename = top_level_metadata_fp[0].clone();
-        let reader = zip.by_name(&filename)?;
-        let tmp_md: ActionMetadata = serde_yaml::from_reader(reader)?;
-        rel_files = ArchiveContents::new( &tmp_md.uuid );
-    } else {
+    match top_level_metadata_fps.next() {
+        Some(top_level_metadata_fp) => {
+            let reader = zip.by_name(&top_level_metadata_fp)?;
+            let tmp_md: ActionMetadata = serde_yaml::from_reader(reader)?;
+            rel_files = ArchiveContents::new( &tmp_md.uuid );
+            println!("{:?}", rel_files);
+        },
+        None => return Err(Box::new(ioError::new(std::io::ErrorKind::InvalidInput,
+                           "Malformed Archive: Zero top-level metadata.yaml files"))),
+    }
+
+    // error if multiple top-level metadata.yaml files
+    if let Some(fp) = top_level_metadata_fps.next() {
         return Err(Box::new(ioError::new(std::io::ErrorKind::InvalidInput,
-                            "Malformed Archive: Zero or multiple top-level metadata.yaml files")));
+                   "Malformed Archive: multiple top-level metadata.yaml files")));
     }
     
     // Create a positive mask for relevant files
